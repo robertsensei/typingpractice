@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Word Wizard – Typing Practice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; height: 100%; background: #0e0a1f; overflow: hidden;
+    font-family: "DotGothic16", "Hiragino Sans", monospace; }
+  #wrap { position: relative; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
+  #stage { position: relative; width: min(100vw, calc(100vh * 16 / 9)); aspect-ratio: 16 / 9; }
+  canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; touch-action: manipulation; }
+  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: safe center; overflow-y: auto;
+    color: #f4e4c1; text-align: center; background: rgba(14, 10, 31, 0.72); }
+  .screen h1 { font-size: clamp(28px, 5vw, 60px); font-weight: normal; margin: 0 0 2px; color: #ffd55a; letter-spacing: 2px;
+    text-shadow: 4px 4px 0 #b4404f, 8px 8px 0 #1a1033; }
+  .screen p { font-size: clamp(12px, 1.7vw, 20px); margin: 2px 0; }
+  .panel { background: #2a1b4f; border: 4px solid #f4e4c1; box-shadow: 0 0 0 4px #1a1033, 8px 8px 0 4px rgba(0,0,0,.4);
+    padding: 10px 16px; margin-top: 10px; max-width: 1050px; }
+  .btn { margin: 6px; padding: 8px 18px; font-size: clamp(14px, 1.9vw, 22px); border: 4px solid #1a1033; border-radius: 0;
+    color: #fff; cursor: pointer; font-family: inherit; line-height: 1.2;
+    box-shadow: inset -4px -4px 0 rgba(0,0,0,.28), inset 4px 4px 0 rgba(255,255,255,.25), 0 6px 0 #1a1033; }
+  .tab { margin: 0 4px 6px; padding: 6px 14px; font-family: inherit; font-size: clamp(14px, 2vw, 22px); cursor: pointer;
+    background: #1a1033; color: #8a7aaa; border: 4px solid #5a4a6a; border-radius: 0; }
+  .tab.on { background: #ffd55a; color: #1a1033; border-color: #1a1033; }
+  #listBtns { max-height: 32vh; overflow-y: auto; }
+  #heroes { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; }
+  .hero { background: #1a1033; border: 4px solid #5a4a6a; padding: 4px 8px 2px; cursor: pointer; color: #8a7aaa; font-family: inherit;
+    font-size: clamp(11px, 1.4vw, 15px); line-height: 1.2; }
+  .hero canvas { display: block; margin: 0 auto 2px; width: calc(19px * var(--z)); height: calc(23px * var(--z)); --z: 3; image-rendering: pixelated; }
+  .hero.on { border-color: #ffd55a; color: #ffd55a; background: #3a2466; }
+  .sgroup { color: #c9b6ff; font-size: clamp(13px, 1.6vw, 18px); margin: 10px 0 2px; text-align: left; padding-left: 8px; }
+  .sbtn { margin: 4px; padding: 6px 12px; font-size: clamp(12px, 1.5vw, 17px); border-width: 3px;
+    box-shadow: inset -3px -3px 0 rgba(0,0,0,.28), 0 4px 0 #1a1033; }
+  .btn small { font-size: 0.7em; opacity: .9; }
+  .btn:active { transform: translateY(4px); box-shadow: inset -4px -4px 0 rgba(0,0,0,.28), inset 4px 4px 0 rgba(255,255,255,.25), 0 2px 0 #1a1033; }
+  .b1 { background: #3d6fd9; } .b2 { background: #d9487a; } .b3 { background: #2f9e5a; } .b4 { background: #e07b1f; }
+  .hidden { display: none; }
+  #topBtns { position: absolute; left: 1.2%; top: 11%; display: flex; gap: 10px; }
+  #topBtns button { font-family: inherit; font-size: clamp(12px, 1.6vw, 18px);
+    background: #2a1b4f; color: #f4e4c1; border: 3px solid #f4e4c1; box-shadow: 0 0 0 3px #1a1033; padding: 6px 10px; cursor: pointer; }
+  #imeWarn { position: absolute; top: 3%; left: 50%; transform: translateX(-50%); background: #b4243c; color: #fff;
+    border: 4px solid #1a1033; padding: 8px 18px; font-size: clamp(14px, 2vw, 22px); white-space: nowrap; }
+</style>
+</head>
+<body>
+<div id="wrap"><div id="stage">
+  <canvas id="game" width="1280" height="720"></canvas>
+
+  <div id="title" class="screen">
+    <h1>WORD WIZARD</h1>
+    <p>Type the words to cast spells and protect the village!</p>
+    <p>単語をタイプして魔法をうち、村を守ろう！</p>
+    <div class="panel">
+      <p style="color:#ffd55a;margin:0 0 6px">▶ Choose your hero / キャラをえらぼう</p>
+      <div id="heroes"></div>
+      <p style="color:#ffd55a;margin:10px 0 6px">▶ Choose a word list / 単語リストをえらぼう</p>
+      <div id="tabs"></div>
+      <div id="listBtns"></div>
+    </div>
+  </div>
+
+  <div id="over" class="screen hidden">
+    <h1>GAME OVER</h1>
+    <p id="finalScore" style="font-size:clamp(20px,3vw,34px)"></p>
+    <button class="btn b3" id="againBtn">Play again / もう一回</button>
+  </div>
+
+  <div id="topBtns" class="hidden">
+    <button id="menuBtn" tabindex="-1">❚❚ MENU</button>
+    <button id="muteBtn" tabindex="-1">♪ SOUND ON</button>
+  </div>
+
+  <div id="pause" class="screen hidden">
+    <h1>PAUSED</h1>
+    <p style="font-size:clamp(16px,2.4vw,26px)">Back to the menu? / メニューにもどる？</p>
+    <div style="margin-top:14px">
+      <button class="btn b3" id="resumeBtn">Keep playing<br><small>つづける</small></button>
+      <button class="btn b2" id="quitBtn">Menu<br><small>メニューへ</small></button>
+    </div>
+  </div>
+  <div id="imeWarn" class="hidden">英語入力（A）に切り替えてね！ Switch to English input!</div>
+</div></div>
+
+<script>
+// ============================================================
+//  WORD LISTS — edit these to change the words
+//  Each list: name (shown on the button), sub (small Japanese label),
+//  words: "english=日本語" separated by commas. Add as many lists as you like.
+// ============================================================
+const LISTS = [
+  // ---------- TOPICS / トピック ----------
+  { group: "topic", name: "Animals", sub: "動物", words:
+    "dog=犬, cat=ねこ, bird=鳥, fish=魚, rabbit=うさぎ, horse=馬, cow=牛, pig=ぶた, bear=くま, lion=ライオン, monkey=さる, elephant=ぞう, tiger=トラ, mouse=ねずみ, frog=カエル" },
+  { group: "topic", name: "Food", sub: "食べ物", words:
+    "apple=りんご, banana=バナナ, milk=牛乳, bread=パン, rice=ごはん, egg=たまご, water=水, juice=ジュース, cake=ケーキ, orange=オレンジ, grapes=ぶどう, tomato=トマト, pizza=ピザ, salad=サラダ, peach=もも" },
+  { group: "topic", name: "Colors", sub: "色", words:
+    "red=赤, blue=青, yellow=黄色, green=緑, black=黒, white=白, pink=ピンク, purple=むらさき, brown=茶色, orange=オレンジ色, gray=灰色" },
+  { group: "topic", name: "School", sub: "学校", words:
+    "school=学校, teacher=先生, student=生徒, book=本, pencil=えんぴつ, desk=つくえ, chair=いす, eraser=消しゴム, notebook=ノート, classroom=教室, friend=友だち, music=音楽, math=数学, science=理科, English=英語" },
+  { group: "topic", name: "Verbs", sub: "動詞", words:
+    "run=走る, eat=食べる, drink=飲む, play=する・遊ぶ, swim=泳ぐ, read=読む, write=書く, sing=歌う, dance=おどる, sleep=ねる, walk=歩く, cook=料理する, study=勉強する, watch=見る, listen=聞く" },
+  { group: "topic", name: "Weather & Nature", sub: "天気・自然", words:
+    "sun=太陽, rain=雨, snow=雪, cloud=雲, wind=風, sunny=晴れの, rainy=雨の, cloudy=くもりの, hot=暑い, cold=寒い, tree=木, flower=花, river=川, mountain=山, sea=海" },
+  { group: "topic", name: "Days & Months", sub: "曜日・月", words:
+    "Monday=月曜日, Tuesday=火曜日, Wednesday=水曜日, Thursday=木曜日, Friday=金曜日, Saturday=土曜日, Sunday=日曜日, January=1月, February=2月, March=3月, April=4月, May=5月, June=6月, July=7月, August=8月, September=9月, October=10月, November=11月, December=12月" },
+
+  // ---------- SCHOOL YEAR / 学年 ----------
+  { group: "grade", name: "小学3・4年", sub: "Elementary 3-4", words:
+    "dog=犬, cat=ねこ, bear=くま, pig=ぶた, apple=りんご, banana=バナナ, melon=メロン, red=赤, blue=青, green=緑, yellow=黄色, one=1, two=2, three=3, four=4, five=5, six=6, seven=7, eight=8, nine=9, ten=10, head=頭, eye=目, ear=耳, nose=鼻, mouth=口, hand=手, foot=足, hat=ぼうし, ball=ボール, pen=ペン, star=星, heart=ハート, circle=丸, square=四角, triangle=三角" },
+  { group: "grade", name: "小学5・6年", sub: "Elementary 5-6", words:
+    "math=算数, science=理科, music=音楽, English=英語, Japanese=国語, doctor=医者, teacher=先生, pilot=パイロット, farmer=農家, nurse=看護師, park=公園, station=駅, hospital=病院, library=図書館, school=学校, zoo=動物園, soccer=サッカー, baseball=野球, tennis=テニス, swim=泳ぐ, jump=跳ぶ, skate=スケートをする, cook=料理する, sing=歌う, dance=おどる, breakfast=朝ごはん, lunch=昼ごはん, dinner=晩ごはん, summer=夏, winter=冬, spring=春, fall=秋, big=大きい, small=小さい, happy=うれしい, sad=悲しい" },
+  { group: "grade", name: "中学1年", sub: "JHS 1", words:
+    "what=何, where=どこ, when=いつ, who=だれ, how=どのように, family=家族, father=父, mother=母, brother=兄・弟, sister=姉・妹, grandmother=祖母, live=住む, like=好きだ, have=持っている, want=ほしい, know=知っている, speak=話す, practice=練習する, make=作る, use=使う, help=手伝う, clean=そうじする, wash=洗う, open=開ける, close=閉める, come=来る, go=行く, buy=買う, morning=朝, afternoon=午後, evening=夕方, night=夜, today=今日, tomorrow=明日, usually=ふつうは, sometimes=ときどき, always=いつも, often=よく, cute=かわいい, beautiful=美しい, favorite=お気に入りの, delicious=おいしい, busy=いそがしい, hungry=おなかがすいた, tired=つかれた" },
+  { group: "grade", name: "中学2年", sub: "JHS 2", words:
+    "went=行った, saw=見た, ate=食べた, made=作った, came=来た, took=取った, bought=買った, wrote=書いた, said=言った, future=未来, dream=夢, job=仕事, trip=旅行, museum=博物館, weekend=週末, vacation=休暇, plan=計画, culture=文化, country=国, world=世界, important=大切な, interesting=おもしろい, difficult=難しい, easy=簡単な, famous=有名な, popular=人気のある, dangerous=危険な, useful=役に立つ, visit=訪れる, forget=忘れる, remember=覚えている, decide=決める, enjoy=楽しむ, invite=招待する, arrive=到着する, believe=信じる, borrow=借りる, lend=貸す, answer=答え, question=質問, problem=問題, reason=理由, idea=考え" },
+  { group: "grade", name: "中学3年", sub: "JHS 3", words:
+    "environment=環境, experience=経験, communicate=伝え合う, volunteer=ボランティア, international=国際的な, technology=科学技術, invent=発明する, develop=発達させる, peace=平和, war=戦争, language=言語, abroad=外国に, scientist=科学者, recycle=リサイクルする, energy=エネルギー, protect=守る, effort=努力, opinion=意見, solve=解決する, successful=成功した, traditional=伝統的な, society=社会, nature=自然, history=歴史, foreign=外国の, understand=理解する, explain=説明する, introduce=紹介する, continue=続ける, discover=発見する, produce=生産する, reduce=減らす, increase=増える, government=政府, education=教育, health=健康, poor=貧しい, global=地球規模の, local=地元の, disaster=災害, safe=安全な" },
+
+];
+const GROUPS = [
+  { id: "topic", name: "Topics", sub: "トピック" },
+  { id: "grade", name: "School Year", sub: "学年" },
+  { id: "eiken", name: "Eiken", sub: "英検" },
+];
+// Eiken decks — copied from the site's flashcards (flashcards/decks/eiken-*.json).
+// Only entries that can be typed are kept (letters, spaces, ' and -).
+const DECKS = [{"id":"eiken-5","title":"英検5級","sections":[{"title":"Family & People ・ 家族・人","group":"名詞 ・ Nouns","words":[["family","家族"],["father","父"],["mother","母"],["brother","兄・弟"],["sister","姉・妹"],["grandfather","祖父"],["grandmother","祖母"],["uncle","おじ"],["aunt","おば"],["cousin","いとこ"],["son","息子"],["daughter","娘"],["parent","親"],["baby","赤ちゃん"],["boy","男の子"],["girl","女の子"],["man","男の人"],["woman","女の人"],["child","子ども"],["friend","友達"],["people","人々"]]},{"title":"Jobs ・ 職業","group":"名詞 ・ Nouns","words":[["teacher","先生"],["student","生徒・学生"],["doctor","医者"],["nurse","看護師"],["police officer","警察官"],["cook","料理人・コック"],["singer","歌手"],["pilot","パイロット"],["farmer","農家の人"],["writer","作家"],["artist","芸術家・画家"],["player","選手"],["driver","運転手"],["dancer","ダンサー"]]},{"title":"School ・ 学校","group":"名詞 ・ Nouns","words":[["school","学校"],["class","授業・クラス"],["classroom","教室"],["homework","宿題"],["test","テスト"],["subject","教科"],["English","英語"],["Japanese","国語・日本語"],["math","数学"],["science","理科"],["music","音楽"],["art","美術"],["history","歴史"],["club","部活・クラブ"],["team","チーム"],["library","図書館"],["gym","体育館"],["question","質問"],["answer","答え"]]},{"title":"School Things ・ 学用品","group":"名詞 ・ Nouns","words":[["desk","机"],["chair","いす"],["blackboard","黒板"],["pen","ペン"],["pencil","鉛筆"],["eraser","消しゴム"],["ruler","定規"],["notebook","ノート"],["textbook","教科書"],["dictionary","辞書"],["book","本"],["bag","かばん"],["page","ページ"],["word","単語"],["letter","手紙・文字"],["story","物語"]]},{"title":"Home ・ 家","group":"名詞 ・ Nouns","words":[["house","家"],["home","家・家庭"],["room","部屋"],["kitchen","台所"],["bedroom","寝室"],["bathroom","浴室・トイレ"],["garden","庭"],["door","ドア"],["window","窓"],["table","テーブル"],["bed","ベッド"],["TV","テレビ"],["computer","コンピューター"],["phone","電話"]]},{"title":"Things ・ 身の回りのもの","group":"名詞 ・ Nouns","words":[["camera","カメラ"],["watch","腕時計"],["clock","時計（置き時計・掛け時計）"],["umbrella","かさ"],["box","箱"],["cup","カップ"],["glass","グラス・コップ"],["key","かぎ"],["toy","おもちゃ"],["ball","ボール"],["racket","ラケット"],["picture","写真・絵"],["photo","写真"],["map","地図"],["money","お金"],["present","プレゼント"]]},{"title":"Getting Around ・ 乗り物","group":"名詞 ・ Nouns","words":[["bike","自転車"],["car","車"],["bus","バス"],["train","電車"],["taxi","タクシー"],["plane","飛行機"],["boat","ボート"],["ship","船"]]},{"title":"Places ・ 場所","group":"名詞 ・ Nouns","words":[["city","都市・市"],["town","町"],["country","国"],["world","世界"],["station","駅"],["park","公園"],["zoo","動物園"],["museum","博物館・美術館"],["hospital","病院"],["store","店"],["shop","店"],["restaurant","レストラン"],["supermarket","スーパー"],["street","通り"]]},{"title":"Nature ・ 自然","group":"名詞 ・ Nouns","words":[["river","川"],["lake","湖"],["mountain","山"],["sea","海"],["beach","浜辺・ビーチ"],["sky","空"],["tree","木"],["flower","花"],["sun","太陽"],["moon","月"],["star","星"]]},{"title":"Meals & Drinks ・ 食事・飲み物","group":"名詞 ・ Nouns","words":[["food","食べ物"],["breakfast","朝食"],["lunch","昼食"],["dinner","夕食"],["rice","ご飯・米"],["bread","パン"],["egg","卵"],["meat","肉"],["fish","魚"],["vegetable","野菜"],["fruit","果物"],["milk","牛乳"],["juice","ジュース"],["tea","お茶・紅茶"],["coffee","コーヒー"],["water","水"]]},{"title":"Foods ・ 食べ物いろいろ","group":"名詞 ・ Nouns","words":[["cake","ケーキ"],["cookie","クッキー"],["pizza","ピザ"],["sandwich","サンドイッチ"],["salad","サラダ"],["soup","スープ"],["curry","カレー"],["ice cream","アイスクリーム"],["chocolate","チョコレート"],["apple","りんご"],["banana","バナナ"],["orange","オレンジ"],["strawberry","いちご"],["tomato","トマト"],["potato","じゃがいも"],["carrot","にんじん"]]},{"title":"Animals ・ 動物","group":"名詞 ・ Nouns","words":[["animal","動物"],["dog","犬"],["cat","ねこ"],["bird","鳥"],["rabbit","うさぎ"],["horse","馬"],["cow","牛"],["pig","ぶた"],["lion","ライオン"],["tiger","トラ"],["elephant","ゾウ"],["monkey","サル"],["bear","クマ"],["panda","パンダ"]]},{"title":"Sports & Fun ・ スポーツ・趣味","group":"名詞 ・ Nouns","words":[["sport","スポーツ"],["baseball","野球"],["soccer","サッカー"],["tennis","テニス"],["basketball","バスケットボール"],["volleyball","バレーボール"],["table tennis","卓球"],["swimming","水泳"],["game","試合・ゲーム"],["song","歌"],["piano","ピアノ"],["guitar","ギター"],["movie","映画"],["party","パーティー"]]},{"title":"Body & Clothes ・ 体・服","group":"名詞 ・ Nouns","words":[["head","頭"],["face","顔"],["eye","目"],["ear","耳"],["nose","鼻"],["mouth","口"],["hand","手"],["foot","足"],["hair","髪"],["cap","帽子（つばのない）"],["hat","帽子（つばのある）"],["shirt","シャツ"],["T-shirt","Tシャツ"],["jacket","上着・ジャケット"],["shoes","くつ"]]},{"title":"Days & Months ・ 曜日・月","group":"名詞 ・ Nouns","words":[["Sunday","日曜日"],["Monday","月曜日"],["Tuesday","火曜日"],["Wednesday","水曜日"],["Thursday","木曜日"],["Friday","金曜日"],["Saturday","土曜日"],["January","1月"],["February","2月"],["March","3月"],["April","4月"],["May","5月"],["June","6月"],["July","7月"],["August","8月"],["September","9月"],["October","10月"],["November","11月"],["December","12月"]]},{"title":"Time ・ 時","group":"名詞 ・ Nouns","words":[["time","時間・時刻"],["hour","1時間"],["minute","分"],["day","日"],["week","週"],["month","月（1か月）"],["year","年"],["morning","朝・午前"],["afternoon","午後"],["evening","夕方"],["night","夜"],["weekend","週末"],["birthday","誕生日"],["holiday","休日"],["season","季節"],["spring","春"],["summer","夏"],["fall","秋"],["winter","冬"]]},{"title":"Colors ・ 色","group":"名詞 ・ Nouns","words":[["color","色"],["red","赤・赤い"],["blue","青・青い"],["yellow","黄色・黄色い"],["green","緑・緑の"],["white","白・白い"],["black","黒・黒い"],["brown","茶色・茶色の"],["pink","ピンク・ピンクの"],["purple","紫・紫の"]]},{"title":"Numbers 1–100 ・ 数","group":"名詞 ・ Nouns","words":[["one","1"],["two","2"],["three","3"],["four","4"],["five","5"],["six","6"],["seven","7"],["eight","8"],["nine","9"],["ten","10"],["eleven","11"],["twelve","12"],["thirteen","13"],["fourteen","14"],["fifteen","15"],["sixteen","16"],["seventeen","17"],["eighteen","18"],["nineteen","19"],["twenty","20"],["thirty","30"],["forty","40"],["fifty","50"],["sixty","60"],["seventy","70"],["eighty","80"],["ninety","90"]]},{"title":"Big Numbers & Order ・ 数・順番","group":"名詞 ・ Nouns","words":[["hundred","100"],["thousand","1000"],["first","1番目の"],["second","2番目の"],["third","3番目の"],["fourth","4番目の"],["fifth","5番目の"],["sixth","6番目の"],["seventh","7番目の"],["eighth","8番目の"],["ninth","9番目の"],["tenth","10番目の"],["twelfth","12番目の"],["twentieth","20番目の"]]},{"title":"Everyday Verbs 1 ・ よく使う動詞①","group":"動詞 ・ Verbs","words":[["have","持っている・食べる"],["like","好きだ"],["play","（スポーツを）する・演奏する"],["eat","食べる"],["drink","飲む"],["go","行く"],["come","来る"],["live","住んでいる"],["want","ほしい"],["know","知っている"],["love","大好きだ・愛している"],["need","必要とする"],["get","手に入れる・着く"],["buy","買う"],["make","作る"],["take","取る・持っていく"]]},{"title":"School Verbs ・ 学校で使う動詞","group":"動詞 ・ Verbs","words":[["study","勉強する"],["read","読む"],["write","書く"],["speak","話す（言語を）"],["talk","話す・しゃべる"],["listen","聞く"],["teach","教える"],["practice","練習する"],["use","使う"],["draw","（線で絵を）描く"],["open","開ける"],["close","閉める"],["start","始める・始まる"],["help","手伝う・助ける"]]},{"title":"Action Verbs ・ 動きの動詞","group":"動詞 ・ Verbs","words":[["run","走る"],["walk","歩く"],["swim","泳ぐ"],["jump","跳ぶ"],["dance","踊る"],["sing","歌う"],["ride","乗る"],["sit","すわる"],["stand","立つ"],["watch","（じっと）見る"],["see","見える・会う"],["look","見る・〜に見える"]]},{"title":"Daily Life Verbs ・ 生活の動詞","group":"動詞 ・ Verbs","words":[["cook","料理する"],["clean","掃除する"],["wash","洗う"],["sleep","眠る"],["stay","滞在する・とどまる"],["visit","訪れる"],["wait","待つ"],["work","働く"],["enjoy","楽しむ"],["call","電話する・呼ぶ"],["meet","会う"],["show","見せる"]]},{"title":"More Verbs ・ もっと動詞","group":"動詞 ・ Verbs","words":[["say","言う"],["tell","伝える・話す"],["give","あたえる・あげる"],["put","置く"],["learn","学ぶ・覚える"],["ask","たずねる"],["think","思う・考える"],["finish","終える"],["fly","飛ぶ"],["try","やってみる"]]},{"title":"Size, Age & Feelings ・ 大きさ・気持ち","group":"形容詞・副詞 ・ Describing Words","words":[["big","大きい"],["small","小さい"],["long","長い"],["short","短い・背が低い"],["tall","背が高い"],["new","新しい"],["old","古い・年をとった"],["young","若い"],["happy","うれしい・幸せな"],["sad","悲しい"],["hungry","おなかがすいた"],["busy","忙しい"],["free","ひまな"],["fine","元気な・晴れた"],["tired","疲れた"],["sleepy","眠い"],["thirsty","のどがかわいた"],["sorry","すまなく思う・気の毒で"],["bad","悪い"]]},{"title":"Good Words ・ ほめることば","group":"形容詞・副詞 ・ Describing Words","words":[["good","よい"],["nice","すてきな"],["great","すばらしい"],["beautiful","美しい"],["pretty","かわいい・きれいな"],["cute","かわいい"],["cool","かっこいい・涼しい"],["kind","親切な"],["favorite","お気に入りの"],["fast","速い・速く"]]},{"title":"Weather ・ 天気","group":"形容詞・副詞 ・ Describing Words","words":[["weather","天気"],["sunny","晴れた"],["cloudy","くもりの"],["rainy","雨の"],["snowy","雪の"],["rain","雨"],["snow","雪"],["hot","暑い・熱い"],["cold","寒い・冷たい"],["warm","暖かい"]]},{"title":"How Often & How Much ・ 頻度・量","group":"形容詞・副詞 ・ Describing Words","words":[["always","いつも"],["usually","ふつうは・たいてい"],["often","よく・しばしば"],["sometimes","ときどき"],["every","毎〜・すべての"],["many","（数が）たくさんの"],["much","（量が）たくさんの"],["some","いくつかの・いくらかの"],["all","すべての"],["very","とても"],["well","上手に"],["too","〜も・あまりに〜すぎる"],["really","本当に"]]},{"title":"When & Where ・ 時・場所","group":"形容詞・副詞 ・ Describing Words","words":[["now","今"],["today","今日"],["tomorrow","明日"],["again","もう一度"],["here","ここに"],["there","そこに"],["together","いっしょに"],["home","家へ・家に"]]},{"title":"Question Words ・ 疑問詞","group":"疑問詞・前置詞 ・ Question & Small Words","words":[["what","何"],["who","だれ"],["whose","だれの"],["which","どちら・どの"],["where","どこ"],["when","いつ"],["why","なぜ"],["how","どのように・どうやって"],["how many","いくつ"],["how much","いくら"],["how old","何歳"]]},{"title":"Little Words ・ 前置詞など","group":"疑問詞・前置詞 ・ Question & Small Words","words":[["in","〜の中に"],["on","〜の上に"],["under","〜の下に"],["by","〜のそばに"],["near","〜の近くに"],["with","〜といっしょに"],["about","〜について"],["from","〜から"],["to","〜へ"],["for","〜のために"],["before","〜の前に"],["after","〜の後に"]]},{"title":"Daily Routine Phrases ・ 生活の熟語","group":"熟語・表現 ・ Phrases","words":[["get up","起きる"],["go to bed","寝る"],["go home","家に帰る"],["come home","帰宅する"],["take a bath","お風呂に入る"],["take a picture","写真を撮る"],["go shopping","買い物に行く"],["go fishing","釣りに行く"],["have a good time","楽しく過ごす"],["in the morning","午前中に・朝に"],["at night","夜に"],["every day","毎日"],["after school","放課後"],["at home","家で"]]},{"title":"Useful Phrases ・ 便利な熟語","group":"熟語・表現 ・ Phrases","words":[["look at","〜を見る"],["listen to","〜を聞く"],["wait for","〜を待つ"],["sit down","すわる"],["stand up","立つ"],["a lot of","たくさんの"],["a little","少し"],["like to","〜するのが好きだ"],["want to","〜したい"],["be good at","〜が得意だ"],["over there","あそこに"],["right now","今すぐ"],["of course","もちろん"]]}]},{"id":"eiken-4","title":"英検4級","sections":[{"title":"People & Jobs ・ 人・職業","group":"名詞 ・ Nouns","words":[["neighbor","近所の人"],["classmate","クラスメート"],["member","メンバー・一員"],["guest","客"],["visitor","訪問者"],["host family","ホストファミリー"],["grandparent","祖父母"],["husband","夫"],["wife","妻"],["scientist","科学者"],["engineer","技術者・エンジニア"],["musician","音楽家"],["firefighter","消防士"],["dentist","歯医者"],["vet","獣医"],["clerk","店員"],["waiter","ウェイター"],["astronaut","宇宙飛行士"]]},{"title":"Around Town ・ 町の中","group":"名詞 ・ Nouns","words":[["bakery","パン屋"],["bank","銀行"],["bookstore","書店"],["building","建物"],["church","教会"],["city hall","市役所"],["department store","デパート"],["factory","工場"],["fire station","消防署"],["police station","警察署"],["post office","郵便局"],["shopping mall","ショッピングモール"],["stadium","スタジアム・競技場"],["theater","劇場"],["temple","寺"],["shrine","神社"],["aquarium","水族館"],["amusement park","遊園地"],["road","道路"],["corner","角"],["village","村"],["bridge","橋"]]},{"title":"Travel ・ 旅行","group":"名詞 ・ Nouns","words":[["trip","旅行"],["vacation","休暇"],["airport","空港"],["hotel","ホテル"],["ticket","チケット・切符"],["passport","パスポート"],["suitcase","スーツケース"],["souvenir","おみやげ"],["seat","座席"],["flight","飛行機の便"],["bus stop","バス停"],["subway","地下鉄"],["way","道・方法"],["guide","ガイド・案内"],["tour","ツアー"],["plan","計画・予定"]]},{"title":"Events & Free Time ・ 行事・余暇","group":"名詞 ・ Nouns","words":[["festival","祭り"],["concert","コンサート"],["contest","コンテスト"],["event","行事・イベント"],["speech","スピーチ"],["race","競走・レース"],["match","試合"],["prize","賞"],["picnic","ピクニック"],["camp","キャンプ"],["hiking","ハイキング"],["show","ショー・番組"],["program","番組"],["comic book","まんが"],["hobby","趣味"],["idea","考え・アイデア"],["fun","楽しみ"],["drama","ドラマ・演劇"],["band","バンド"]]},{"title":"School Life ・ 学校生活","group":"名詞 ・ Nouns","words":[["grade","学年・成績"],["uniform","制服"],["lesson","授業・レッスン"],["exam","試験"],["school festival","文化祭"],["sports day","運動会"],["lunchtime","昼休み"],["break","休憩"],["report","レポート・報告"],["paper","紙・レポート"],["poster","ポスター"],["homeroom","ホームルーム"],["project","課題・プロジェクト"],["dream","夢"]]},{"title":"Home & Things ・ 家・もの","group":"名詞 ・ Nouns","words":[["apartment","アパート・マンション"],["floor","床・階"],["wall","壁"],["roof","屋根"],["stairs","階段"],["fridge","冷蔵庫"],["towel","タオル"],["soap","せっけん"],["bottle","びん・ボトル"],["plate","皿"],["fork","フォーク"],["knife","ナイフ"],["spoon","スプーン"],["magazine","雑誌"],["newspaper","新聞"],["card","カード"],["wallet","財布"],["ring","指輪"],["gift","贈り物"],["video","動画・ビデオ"],["message","メッセージ"],["e-mail","Eメール"]]},{"title":"Food & Cooking ・ 食べ物・料理","group":"名詞 ・ Nouns","words":[["hamburger","ハンバーガー"],["noodles","めん類"],["spaghetti","スパゲッティ"],["pie","パイ"],["sugar","砂糖"],["salt","塩"],["butter","バター"],["cheese","チーズ"],["grape","ぶどう"],["peach","もも"],["melon","メロン"],["onion","たまねぎ"],["corn","とうもろこし"],["chicken","鶏肉・ニワトリ"],["beef","牛肉"],["pork","豚肉"],["dessert","デザート"],["snack","おやつ・軽食"],["menu","メニュー"]]},{"title":"Nature & Animals ・ 自然・動物","group":"名詞 ・ Nouns","words":[["wind","風"],["cloud","雲"],["storm","嵐"],["typhoon","台風"],["forest","森"],["hill","丘"],["field","野原・畑"],["ground","地面・グラウンド"],["earth","地球"],["leaf","葉"],["pet","ペット"],["dolphin","イルカ"],["whale","クジラ"],["snake","ヘビ"],["frog","カエル"],["duck","アヒル・カモ"],["sheep","羊"],["turtle","カメ"]]},{"title":"Body & Health ・ 体・健康","group":"名詞 ・ Nouns","words":[["arm","腕"],["leg","脚"],["finger","指"],["tooth","歯"],["back","背中"],["shoulder","肩"],["cold","風邪"],["fever","熱"],["headache","頭痛"],["stomachache","腹痛"],["medicine","薬"]]},{"title":"Useful Nouns ・ 便利な名詞","group":"名詞 ・ Nouns","words":[["kind","種類"],["part","部分"],["place","場所"],["thing","もの・こと"],["life","生活・命"],["job","仕事"],["work","仕事・作品"],["problem","問題"],["news","ニュース"],["sound","音"],["voice","声"],["size","サイズ・大きさ"],["group","グループ"],["Internet","インターネット"],["smartphone","スマートフォン"],["website","ウェブサイト"],["sign","標識・看板"]]},{"title":"Sports & Music ・ スポーツ・音楽","group":"名詞 ・ Nouns","words":[["goal","ゴール・目標"],["score","得点"],["coach","コーチ"],["fan","ファン"],["pool","プール"],["marathon","マラソン"],["skiing","スキー"],["skating","スケート"],["drum","ドラム"],["flute","フルート"],["trumpet","トランペット"],["violin","バイオリン"]]},{"title":"Time ・ 時","group":"名詞 ・ Nouns","words":[["date","日付"],["calendar","カレンダー"],["noon","正午"],["midnight","真夜中"],["half","半分"],["quarter","4分の1・15分"],["o'clock","〜時（ちょうど）"],["yesterday","昨日"],["tonight","今夜"],["weekday","平日"]]},{"title":"Past Tense Review ① ・ 過去形の復習①","group":"動詞 ・ Verbs","words":[["go","行く"],["come","来る"],["have","持っている・食べる"],["eat","食べる"],["drink","飲む"],["see","見える・会う"],["make","作る"],["take","取る・持っていく"],["get","手に入れる・着く"],["buy","買う"],["read","読む"],["write","書く"],["speak","話す"],["run","走る"],["swim","泳ぐ"]]},{"title":"Past Tense Review ② ・ 過去形の復習②","group":"動詞 ・ Verbs","words":[["sing","歌う"],["sit","すわる"],["stand","立つ"],["teach","教える"],["give","あたえる"],["tell","伝える・話す"],["say","言う"],["think","思う・考える"],["know","知っている"],["meet","会う"],["put","置く"],["fly","飛ぶ"],["ride","乗る"],["draw","描く"],["sleep","眠る"]]},{"title":"Going Places ・ 移動の動詞","group":"動詞 ・ Verbs","words":[["arrive","着く"],["leave","出発する・去る"],["return","戻る・返す"],["travel","旅行する"],["move","引っ越す・動く"],["drive","運転する"],["climb","登る"],["cross","渡る・横切る"],["hurry","急ぐ"],["turn","曲がる"],["stop","止まる・やめる"],["carry","運ぶ"],["bring","持ってくる"],["send","送る"]]},{"title":"People Verbs ・ 人と関わる動詞","group":"動詞 ・ Verbs","words":[["invite","招待する"],["join","参加する"],["answer","答える"],["borrow","借りる"],["lend","貸す"],["sell","売る"],["pay","支払う"],["win","勝つ"],["lose","負ける・なくす"],["share","分け合う・共有する"],["plan","計画する"],["call back","折り返し電話する"]]},{"title":"Doing & Feeling ・ する・感じる","group":"動詞 ・ Verbs","words":[["forget","忘れる"],["decide","決める"],["feel","感じる"],["laugh","笑う"],["cry","泣く"],["smile","ほほえむ"],["choose","選ぶ"],["catch","捕まえる"],["break","壊す"],["build","建てる"],["find","見つける"],["keep","保つ・飼う"],["become","〜になる"],["begin","始める・始まる"],["hear","聞こえる"],["wear","着ている"],["change","変える・変わる"],["check","確かめる"]]},{"title":"More Action Verbs ・ もっと動詞","group":"動詞 ・ Verbs","words":[["understand","理解する"],["collect","集める"],["paint","（絵の具で）描く・塗る"],["fix","修理する"],["fall","落ちる・転ぶ"],["hit","打つ"],["throw","投げる"],["kick","蹴る"],["rain","雨が降る"],["snow","雪が降る"],["die","死ぬ"],["wish","願う"],["enter","入る"]]},{"title":"Comparing Words ・ 比べることば","group":"形容詞・副詞 ・ Describing Words","words":[["easy","簡単な"],["difficult","難しい"],["hard","難しい・かたい・熱心に"],["famous","有名な"],["popular","人気のある"],["interesting","おもしろい・興味深い"],["exciting","わくわくさせる"],["boring","退屈な"],["expensive","高価な"],["cheap","安い"],["heavy","重い"],["light","軽い・明るい"],["large","大きい"],["high","高い"],["low","低い"],["strong","強い"],["quick","速い"],["slow","遅い"],["quiet","静かな"],["dark","暗い"],["bright","明るい"]]},{"title":"Feelings & More ・ 気持ち・その他","group":"形容詞・副詞 ・ Describing Words","words":[["sick","病気の"],["angry","怒った"],["glad","うれしい"],["afraid","怖がって"],["ready","準備ができて"],["friendly","親しみやすい"],["funny","おかしい"],["delicious","とてもおいしい"],["special","特別な"],["wonderful","すばらしい"],["poor","貧しい・かわいそうな"],["rich","金持ちの"],["dangerous","危険な"],["safe","安全な"],["sure","確かな"],["same","同じ"],["other","ほかの"],["only","唯一の・〜だけ"],["next","次の"],["last","この前の・最後の"]]},{"title":"Right or Wrong? ・ 正しい？まちがい？","group":"形容詞・副詞 ・ Describing Words","words":[["full","いっぱいの・満腹の"],["empty","空の"],["right","正しい・右の"],["wrong","間違った"],["left","左の"],["sweet","甘い"],["real","本当の・本物の"],["true","本当の"],["lucky","幸運な"],["foreign","外国の"]]},{"title":"Better & Best ・ 比較級・最上級","group":"形容詞・副詞 ・ Describing Words","words":[["better","よりよい・より上手に"],["best","最もよい・最も上手に"],["more","もっと多くの・より〜"],["most","最も多くの・最も〜"],["than","〜よりも"],["early","早く・早い"],["late","遅く・遅い"],["old","古い・年をとった"],["young","若い"],["big","大きい"]]},{"title":"When & How ・ 時・様子","group":"形容詞・副詞 ・ Describing Words","words":[["ago","〜前に"],["soon","すぐに"],["later","後で"],["still","まだ"],["then","そのとき・それから"],["once","一度"],["twice","二度"],["finally","ついに"],["maybe","たぶん"],["also","〜もまた"],["slowly","ゆっくりと"],["quickly","すばやく"],["almost","ほとんど"],["outside","外で"],["inside","中で"],["someday","いつか"]]},{"title":"Connecting & Position ・ つなぐ・位置","group":"前置詞・接続詞 ・ Small Words","words":[["because","なぜなら〜だから"],["if","もし〜なら"],["when","〜するとき"],["so","だから"],["or","または"],["behind","〜の後ろに"],["between","〜の間に"],["in front of","〜の前に"],["next to","〜の隣に"],["across","〜を横切って・〜の向こうに"],["along","〜に沿って"],["around","〜のまわりに"],["into","〜の中へ"],["over","〜の上に・〜を越えて"],["through","〜を通って"],["without","〜なしで"],["like","〜のような"]]},{"title":"Verb Phrases ① ・ 動詞の熟語①","group":"熟語・表現 ・ Phrases","words":[["be going to","〜するつもりだ"],["be late for","〜に遅れる"],["look like","〜のように見える"],["get on","〜に乗る"],["get off","〜から降りる"],["put on","〜を着る"],["take off","〜を脱ぐ・離陸する"],["wake up","目を覚ます"],["come back","戻ってくる"],["go out","外出する"],["talk to","〜に話しかける"],["think about","〜について考える"],["hear about","〜について聞く"]]},{"title":"Verb Phrases ② ・ 動詞の熟語②","group":"熟語・表現 ・ Phrases","words":[["be from","〜出身だ"],["be famous for","〜で有名だ"],["be afraid of","〜を怖がる"],["be glad to","〜してうれしい"],["have to","〜しなければならない"],["want to be","〜になりたい"],["stay home","家にいる"],["arrive at","〜に着く"],["leave for","〜に向けて出発する"],["take a walk","散歩する"],["have a cold","風邪をひいている"],["catch a cold","風邪をひく"]]},{"title":"Time & Amount Phrases ・ 時・量の熟語","group":"熟語・表現 ・ Phrases","words":[["at first","最初は"],["for the first time","初めて"],["one day","ある日"],["last week","先週"],["next year","来年"],["these days","最近"],["all day","一日中"],["at that time","そのとき"],["far from","〜から遠い"],["a cup of","カップ1杯の"],["a glass of","コップ1杯の"],["a piece of","1切れの・1枚の"]]}]},{"id":"eiken-3","title":"英検3級","sections":[{"title":"People ・ 人","group":"名詞 ・ Nouns","words":[["adult","大人"],["teenager","10代の若者"],["citizen","市民"],["customer","客"],["owner","持ち主"],["staff","スタッフ・職員"],["leader","リーダー"],["captain","キャプテン・船長"],["partner","パートナー"],["volunteer","ボランティア"],["designer","デザイナー"],["photographer","写真家"],["reporter","記者"],["author","著者"],["actor","俳優"],["professional","プロ"],["expert","専門家"],["stranger","知らない人"]]},{"title":"Topic Words ・ テーマのことば","group":"名詞 ・ Nouns","words":[["environment","環境"],["nature","自然"],["culture","文化"],["technology","科学技術"],["language","言語"],["information","情報"],["experience","経験"],["future","未来・将来"],["peace","平和"],["war","戦争"],["energy","エネルギー"],["pollution","汚染"],["garbage","ごみ"],["recycling","リサイクル"],["plastic","プラスチック"],["health","健康"]]},{"title":"Society & Places ・ 社会・場所","group":"名詞 ・ Nouns","words":[["community","地域社会"],["area","地域"],["center","中心・センター"],["office","事務所・会社"],["company","会社"],["hall","会館・ホール"],["island","島"],["coast","海岸"],["desert","砂漠"],["ocean","海・大洋"],["space","宇宙"],["planet","惑星"]]},{"title":"School & Study ・ 学校・学習","group":"名詞 ・ Nouns","words":[["graduation","卒業"],["ceremony","式"],["result","結果"],["skill","技術・技能"],["topic","話題"],["title","題名"],["example","例"],["reason","理由"],["opinion","意見"],["fact","事実"],["chance","機会"],["rule","規則"],["mistake","間違い"]]},{"title":"Daily Life ・ 生活","group":"名詞 ・ Nouns","words":[["meal","食事"],["recipe","レシピ"],["ingredient","材料"],["dish","料理・皿"],["taste","味"],["price","値段"],["sale","特売・販売"],["coupon","クーポン"],["cash","現金"],["sweater","セーター"],["glove","手袋"],["boots","ブーツ"],["schedule","予定"],["appointment","（人と会う）約束・予約"],["reservation","予約"]]},{"title":"Things ・ もの","group":"名詞 ・ Nouns","words":[["instrument","楽器・道具"],["machine","機械"],["robot","ロボット"],["tool","道具"],["battery","電池"],["light","明かり"],["screen","画面"],["tablet","タブレット"],["model","模型"],["statue","像"],["sticker","シール"]]},{"title":"Feelings & Ideas ・ 気持ち・考え","group":"名詞 ・ Nouns","words":[["feeling","気持ち"],["hope","希望"],["memory","思い出・記憶"],["interest","興味"],["trouble","困ったこと・面倒"],["advice","助言"],["promise","約束"],["secret","秘密"],["surprise","驚き"],["thought","考え"]]},{"title":"Nature & Environment ・ 自然・環境","group":"名詞 ・ Nouns","words":[["climate","気候"],["temperature","気温・温度"],["global warming","地球温暖化"],["earthquake","地震"],["disaster","災害"],["flood","洪水"],["air","空気"],["insect","昆虫"],["plant","植物"],["seed","種"],["sunlight","日光"]]},{"title":"World & Travel ・ 世界・旅行","group":"名詞 ・ Nouns","words":[["tourist","観光客"],["sightseeing","観光"],["custom","習慣"],["tradition","伝統"],["castle","城"],["view","景色・眺め"],["exchange student","交換留学生"],["homestay","ホームステイ"],["capital","首都"],["population","人口"]]},{"title":"Sports & Health ・ スポーツ・健康","group":"名詞 ・ Nouns","words":[["athlete","運動選手"],["competition","大会・競争"],["tournament","トーナメント"],["injury","けが"],["pain","痛み"],["patient","患者"]]},{"title":"Books & Media ・ 本・メディア","group":"名詞 ・ Nouns","words":[["article","記事"],["novel","小説"],["poem","詩"],["character","登場人物・文字"],["app","アプリ"],["advertisement","広告"],["comment","コメント"]]},{"title":"Past Participles ① ・ 過去分詞①","group":"動詞 ・ Verbs","words":[["go","行く"],["come","来る"],["eat","食べる"],["see","見える・会う"],["take","取る"],["give","あたえる"],["write","書く"],["speak","話す"],["know","知っている"],["make","作る"],["be","〜である・いる"],["do","する"],["have","持っている"],["build","建てる"],["find","見つける"]]},{"title":"Past Participles ② ・ 過去分詞②","group":"動詞 ・ Verbs","words":[["begin","始める"],["break","壊す"],["choose","選ぶ"],["drive","運転する"],["fall","落ちる"],["forget","忘れる"],["hear","聞こえる"],["lose","なくす・負ける"],["read","読む"],["ride","乗る"],["sell","売る"],["sing","歌う"],["swim","泳ぐ"],["teach","教える"],["wear","着ている"]]},{"title":"Thinking & Feeling ・ 考える・感じる","group":"動詞 ・ Verbs","words":[["believe","信じる"],["hope","望む"],["worry","心配する"],["remember","覚えている・思い出す"],["wonder","〜だろうかと思う"],["imagine","想像する"],["agree","賛成する"],["mean","意味する"],["notice","気づく"],["surprise","驚かせる"],["excite","わくわくさせる"],["miss","恋しく思う・乗り遅れる"],["prefer","〜をより好む"]]},{"title":"Doing Things ・ 行動の動詞","group":"動詞 ・ Verbs","words":[["explain","説明する"],["introduce","紹介する"],["improve","上達させる・改善する"],["protect","守る"],["spend","過ごす・使う"],["grow","育つ・育てる"],["save","救う・節約する"],["solve","解決する"],["create","創り出す"],["discover","発見する"],["produce","生産する"],["prepare","準備する"],["reach","着く・届く"],["raise","上げる・育てる"],["hold","持つ・開催する"]]},{"title":"Daily Life Verbs ・ 生活の動詞","group":"動詞 ・ Verbs","words":[["order","注文する"],["receive","受け取る"],["reserve","予約する"],["cancel","取り消す"],["recycle","リサイクルする"],["throw away","捨てる"],["graduate","卒業する"],["belong","所属する"],["exercise","運動する"],["relax","くつろぐ"],["rest","休む"],["taste","〜な味がする"],["smell","〜なにおいがする"],["sound","〜に聞こえる"]]},{"title":"Communication ・ 伝える動詞","group":"動詞 ・ Verbs","words":[["communicate","意思を伝え合う"],["discuss","話し合う"],["report","報告する"],["describe","説明する・描写する"],["accept","受け入れる"],["allow","許す"],["offer","申し出る"],["suggest","提案する"],["thank","感謝する"],["welcome","歓迎する"],["translate","翻訳する"]]},{"title":"Change & Action ・ 変化・行動","group":"動詞 ・ Verbs","words":[["happen","起こる"],["continue","続ける"],["follow","従う・ついていく"],["perform","演じる・演奏する"],["fill","満たす"],["hurt","傷つける・痛む"],["spread","広がる・広げる"],["increase","増える・増やす"],["decrease","減る・減らす"],["reduce","減らす"],["waste","無駄にする"],["plant","植える"],["land","着陸する"],["appear","現れる"],["disappear","消える"]]},{"title":"Important Words ・ 大切なことば","group":"形容詞・副詞 ・ Describing Words","words":[["important","大切な"],["necessary","必要な"],["different","違う・異なる"],["similar","似ている"],["international","国際的な"],["traditional","伝統的な"],["useful","役に立つ"],["possible","可能な"],["impossible","不可能な"],["common","共通の・よくある"],["main","主な"],["local","地元の"],["modern","現代の"],["natural","自然の"],["public","公共の"]]},{"title":"Feelings & People ・ 気持ち・人","group":"形容詞・副詞 ・ Describing Words","words":[["careful","注意深い"],["excited","わくわくした"],["surprised","驚いた"],["interested","興味がある"],["worried","心配した"],["nervous","緊張した"],["proud","誇りに思う"],["bored","退屈した"],["lonely","さびしい"],["shy","恥ずかしがりの"],["brave","勇敢な"],["smart","頭のよい"],["polite","礼儀正しい"],["helpful","役に立つ・親切な"],["healthy","健康な"]]},{"title":"Describing Things ・ ものの様子","group":"形容詞・副詞 ・ Describing Words","words":[["own","自分自身の"],["enough","十分な"],["each","それぞれの"],["several","いくつかの"],["whole","全体の"],["huge","巨大な"],["tiny","とても小さい"],["wide","幅の広い"],["narrow","狭い"],["deep","深い"],["fresh","新鮮な"],["crowded","混雑した"],["comfortable","快適な"],["convenient","便利な"]]},{"title":"More Describing Words ・ もっと形容詞","group":"形容詞・副詞 ・ Describing Words","words":[["clear","はっきりした・澄んだ"],["serious","深刻な・真剣な"],["strange","奇妙な"],["terrible","ひどい"],["perfect","完璧な"],["simple","簡単な・単純な"],["active","活動的な"],["alone","ひとりで"],["colorful","色とりどりの"],["dry","乾いた"],["wet","ぬれた"],["dirty","汚い"],["loud","（音が）大きい・うるさい"]]},{"title":"Adverbs ・ 副詞","group":"形容詞・副詞 ・ Describing Words","words":[["already","すでに・もう"],["yet","（疑問文で）もう・（否定文で）まだ"],["ever","今までに"],["never","一度も〜ない"],["just","ちょうど・ただ"],["recently","最近"],["abroad","海外へ・海外で"],["once","かつて・一度"],["especially","特に"],["probably","たぶん"],["actually","実は"],["suddenly","突然"],["carefully","注意深く"],["easily","簡単に"],["instead","その代わりに"],["even","〜でさえ"]]},{"title":"Connecting Words ・ つなぐことば","group":"前置詞・接続詞 ・ Small Words","words":[["during","〜の間に"],["until","〜まで"],["since","〜以来"],["though","〜だけれども"],["although","〜だけれども"],["while","〜している間に"],["however","しかし"],["such","そのような"],["against","〜に反対して"],["among","〜の間で（3つ以上）"],["toward","〜の方へ"],["beside","〜のそばに"],["who","（関係代名詞）〜する人"],["which","（関係代名詞）〜するもの"],["that","（関係代名詞）〜する人・もの"]]},{"title":"Be Phrases ・ beの熟語","group":"熟語・表現 ・ Phrases","words":[["be able to","〜できる"],["be interested in","〜に興味がある"],["be proud of","〜を誇りに思う"],["be different from","〜と違う"],["be full of","〜でいっぱいだ"],["be made of","〜でできている（材料）"],["be made from","〜から作られる（原料）"],["be known as","〜として知られている"],["be covered with","〜でおおわれている"],["be surprised at","〜に驚く"],["be worried about","〜を心配する"],["be ready for","〜の準備ができている"],["be sure to","必ず〜する"]]},{"title":"Verb Phrases ・ 動詞の熟語","group":"熟語・表現 ・ Phrases","words":[["take care of","〜の世話をする"],["look forward to","〜を楽しみに待つ"],["look for","〜を探す"],["look after","〜の世話をする"],["give up","あきらめる"],["grow up","成長する"],["find out","わかる・見つけ出す"],["pick up","拾う・車で迎えに行く"],["turn on","（電気などを）つける"],["turn off","（電気などを）消す"],["try on","試着する"],["get to","〜に着く"],["hear from","〜から便りがある"],["make friends with","〜と友達になる"],["take part in","〜に参加する"]]},{"title":"Other Phrases ・ その他の熟語","group":"熟語・表現 ・ Phrases","words":[["a few","少しの・いくつかの"],["a lot","たくさん"],["each other","お互い"],["for example","例えば"],["in the future","将来"],["because of","〜のために・〜が原因で"],["in fact","実際は"],["at last","ついに"],["as soon as","〜するとすぐに"],["both A and B","AとBの両方"],["either A or B","AかBのどちらか"],["instead of","〜の代わりに"],["thanks to","〜のおかげで"]]},{"title":"Grammar Patterns ・ 文の形","group":"熟語・表現 ・ Phrases","words":[["decide to","〜することに決める"],["try to","〜しようとする"],["need to","〜する必要がある"],["would like to","〜したい"],["how to","〜のしかた"],["what to","何を〜すべきか"]]}]}];
+// How often a monster shows Japanese instead of the English word (0 = never, 1 = always)
+const JP_CHANCE = 0.5;
+// Monster walking speed on wave 1 (it goes up by 7 each wave). Boss speed goes up by 3 each wave.
+const BASE_SPEED = 70;
+const BOSS_SPEED = 32;
+
+function parseList(s) {
+  return s.split(",").map(p => p.trim()).filter(Boolean).map(p => {
+    const [en, jp] = p.split("="); return { en: en.trim(), jp: (jp || "").trim() };
+  });
+}
+let WORDS = [];
+
+// ============================================================
+//  SETUP — the game logic uses 1280x720 coordinates;
+//  the world is drawn on a tiny 320x180 canvas and scaled x4 for crisp pixels.
+// ============================================================
+const cv = document.getElementById("game");
+const ctx = cv.getContext("2d");
+const W = 1280, H = 720, PX = 4, LW = W / PX, LH = H / PX;
+const low = document.createElement("canvas"); low.width = LW; low.height = LH;
+const lx = low.getContext("2d");
+const FONT = '"DotGothic16","Hiragino Sans",monospace';
+
+const WALL_X = 232;                   // enemies that reach here hit the village
+const ORB = { x: 71 * PX, y: 54 * PX }; // where fireballs come from
+const GROUND_LANES = [508, 584];      // feet positions for walkers
+const AIR_LANES = [230, 300, 370];
+
+let state = "title";
+let enemies = [], fireballs = [], particles = [], floaters = [];
+let target = null, typed = "";
+let score = 0, lives = 5, wave = 0, spawnLeft, spawnTimer, waveBanner = 0, combo = 0, shake = 0, lastTime = 0, clock = 0;
+let deck = [];
+
+// ============================================================
+//  PIXEL SPRITES  ('.' = transparent)
+// ============================================================
+const PAL = {
+  o: "#1a1033",                                   // outline
+  H: "#3550c8", h: "#5b7cf0", s: "#ffd55a",        // hat
+  k: "#f6c49c", K: "#d9967a", e: "#1a1033", y: "#6b3f22", // skin, hair
+  w: "#f4f1ea", W: "#bfb8c9",                     // beard
+  R: "#4361d8", r: "#2b3a96", b: "#e0a03a",        // robe
+  l: "#6fdc6a", L: "#9ff28e", g: "#3a9a48",        // slime
+  G: "#7fbf4a", D: "#4f8a2e", t: "#8a5a32", T: "#5e3a1e", x: "#ff4a4a", n: "#f4f1ea", // goblin
+  V: "#8a4fc9", v: "#5d2f94", p: "#ff6f9a",        // bat
+  F: "#ff4d6d", f: "#b4243c", Q: "#ffc2cf",        // heart
+};
+
+function sprite(rows, pal = PAL) {
+  const w = Math.max(...rows.map(r => r.length)), h = rows.length;
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const g = c.getContext("2d");
+  rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch !== "." && pal[ch]) { g.fillStyle = pal[ch]; g.fillRect(x, y, 1, 1); } }));
+  // white "hit flash" copy
+  const f = document.createElement("canvas"); f.width = w; f.height = h;
+  const fg = f.getContext("2d"); fg.drawImage(c, 0, 0); fg.globalCompositeOperation = "source-in"; fg.fillStyle = "#fff"; fg.fillRect(0, 0, w, h);
+  c.flash = f;
+  return c;
+}
+
+const WIZARD_ROWS = [
+  "........oo........",
+  ".......oHho.......",
+  "......oHHho.......",
+  "......oHHHho......",
+  ".....oHHsHHo......",
+  ".....oHsssHho.....",
+  "....oHHHsHHHho....",
+  "...oHHHHHHHHHho...",
+  "..oooooooooooooo..",
+  "....okkkkkkkko....",
+  "....okekkkkeko....",
+  "....oKkkkkkkKo....",
+  "....owkkKKkkwo....",
+  "...oRwwwwwwwwRo...",
+  "..oRRowwwwwwoRRo..",
+  "..oRRRowwwWoRRRo..",
+  ".oRRRRRowWoRRRRro.",
+  ".oRRRRRRooRRRRrro.",
+  ".obbbbbbbbbbbbbbo.",
+  ".orRRRRRRRRRRRrro.",
+  "orrRRRRRRRRRRRrrro",
+  "orrrRRRRRRRRRrrrro",
+  "oooooooooooooooooo",
+];
+
+const WITCH_ROWS = [
+  "...........oo......",
+  "..........oHHo.....",
+  ".........oHHho.....",
+  "........oHHHho.....",
+  ".......oHHHHHo.....",
+  "......oHhHHHHHo....",
+  ".....oHhHHHHHHo....",
+  ".....ossssssssso...",
+  ".ooooHHHHHHHHHHoooo",
+  "oHHHHHHHHHHHHHHHHHo",
+  ".ooyyyyyyyyyyyyyoo.",
+  "..oyykkkkkkkkkyyo..",
+  "..oyykekkkkkekyyo..",
+  "..oyykkkkkkkkkyyo..",
+  "..oyyykkkKKkkkyyyo.",
+  "..oyyyokkkkkoyyyyo.",
+  "..oyyRRooooooRRyyo.",
+  "..oyoRRRRRRRRRRoyo.",
+  "...ooRRRbbbbRRRoo..",
+  "....oRRRRRRRRRRo...",
+  "...orRRRRRRRRRRro..",
+  "..orrRRRRRRRRRRrro.",
+  "..ooooooooooooooooo",
+];
+const YOUNG_ROWS = [
+  "........oo........",
+  ".......oHho.......",
+  "......oHHho.......",
+  "......oHHHho......",
+  ".....oHHsHHo......",
+  ".....oHsssHho.....",
+  "....oHHHsHHHho....",
+  "...oHHHHHHHHHho...",
+  "..oooooooooooooo..",
+  "....oyyyyyyyyo....",
+  "....oykkkkkkyo....",
+  "....okekkkkeko....",
+  "....okkkkkkkko....",
+  ".....okkKKkko.....",
+  "...ooRRooooRRoo...",
+  "..oRRRRRRRRRRRRo..",
+  ".oRRRRRRRRRRRRRro.",
+  ".oRRRRRRooRRRRrro.",
+  ".obbbbbbbbbbbbbbo.",
+  ".orRRRRRRRRRRRrro.",
+  "orrRRRRRRRRRRRrrro",
+  "orrrRRRRRRRRRrrrro",
+  "oooooooooooooooooo",
+];
+// ============================================================
+//  CHARACTERS — name, look, and spell colours [outer, middle, core] + orb colour
+// ============================================================
+const CHARACTERS = [
+  { name: "Merlin", sub: "青の魔法使い", rows: WIZARD_ROWS, pal: {}, fire: ["#ff5a2e", "#ff9a2e", "#ffd55a"], orb: "#5fc8ff" },
+  { name: "Ember",  sub: "炎の魔法使い", rows: WIZARD_ROWS,
+    pal: { H: "#a8283a", h: "#e05a5a", R: "#c23a3a", r: "#7e2030", w: "#c9c4d4", W: "#8f88a0", b: "#ffd55a" }, fire: ["#d42020", "#ff5a2e", "#ffb13d"], orb: "#ff7a3d" },
+  { name: "Sage",   sub: "森の魔法使い", rows: YOUNG_ROWS,
+    pal: { H: "#2f7a44", h: "#4fc06a", s: "#ffd55a", R: "#3a9a55", r: "#24683a", b: "#c08a2a", y: "#7a4a22" }, fire: ["#2f9e5a", "#6fdc6a", "#d8ffb0"], orb: "#9ff28e" },
+  { name: "Luna",   sub: "月の魔女", rows: WITCH_ROWS,
+    pal: { H: "#3a2466", h: "#5b3a99", s: "#ffd55a", R: "#6a3fb0", r: "#452878", b: "#ffd55a", y: "#ff8a3d" }, fire: ["#8a3fd1", "#d06aff", "#ffc2ff"], orb: "#d06aff" },
+  { name: "Frost",  sub: "氷の魔女", rows: WITCH_ROWS,
+    pal: { H: "#c8d8f8", h: "#ffffff", s: "#5fc8ff", R: "#7fc8ff", r: "#4a8ad0", b: "#ffffff", y: "#f4f1ea" }, fire: ["#3a8ad0", "#7fd8ff", "#ffffff"], orb: "#bff0ff" },
+  { name: "Rose",   sub: "花の魔女", rows: WITCH_ROWS,
+    pal: { H: "#c23a6a", h: "#ff7aa8", s: "#ffffff", R: "#ff8fb1", r: "#c24a78", b: "#ffffff", y: "#ffd55a" }, fire: ["#e0306a", "#ff8fb1", "#fff0f5"], orb: "#ff8fb1" },
+];
+CHARACTERS.forEach(c => c.spr = sprite(c.rows, { ...PAL, ...c.pal }));
+let hero = 0;
+try { hero = Math.min(CHARACTERS.length - 1, Math.max(0, +localStorage.getItem("ww-hero") || 0)); } catch (e) {}
+
+
+const SLIME = [sprite([
+  "......oooo......",
+  "....ooLLllo.....",
+  "...oLLlllllo....",
+  "..oLlllllllllo..",
+  "..olleollleollo.",
+  ".olllelllellllo.",
+  ".ollllllllllllgo",
+  ".olllloooolllggo",
+  ".ogllllllllllggo",
+  "..oggggggggggoo.",
+  "...oooooooooo...",
+]), sprite([
+  "................",
+  "................",
+  ".....ooooo......",
+  "...ooLLlllloo...",
+  "..oLlllllllllo..",
+  ".olleolllleolllo",
+  ".olllellllellllo",
+  "olllllooooolllggo",
+  "ogllllllllllllggo",
+  ".oggggggggggggoo.",
+  "..ooooooooooooo..",
+])];
+
+const GOBLIN = [sprite([
+  "....oooooo....",
+  "o..oGGGGGGo..o",
+  "oGoGGGGGGGGoGo",
+  ".oGGGGGGGGGGo.",
+  "..oGxoGGoxGo..",
+  "..oGGGGGGGGo..",
+  "..oGnGooGnGo..",
+  "...oGGGGGGo...",
+  "..otttttttto..",
+  ".oGtttTTtttGo.",
+  ".oGttbbbbttGo.",
+  "..otttttttto..",
+  "...otto.otto..",
+  "...oTTo.oTTo..",
+  "...ooo..ooo...",
+]), sprite([
+  "....oooooo....",
+  "o..oGGGGGGo..o",
+  "oGoGGGGGGGGoGo",
+  ".oGGGGGGGGGGo.",
+  "..oGxoGGoxGo..",
+  "..oGGGGGGGGo..",
+  "..oGnGooGnGo..",
+  "...oGGGGGGo...",
+  "..otttttttto..",
+  ".oGtttTTtttGo.",
+  ".oGttbbbbttGo.",
+  "..otttttttto..",
+  "..otto..otto..",
+  "..oTTo..oTTo..",
+  "..ooo....ooo..",
+])];
+
+const BAT = [sprite([
+  "o................o",
+  "oo..............oo",
+  "oVo....o..o....oVo",
+  "oVVo...oVVo...oVVo",
+  "oVVVo.oVVVVo.oVVVo",
+  "oVVVVoVpVVpVoVVVVo",
+  ".ovVVVVVVVVVVVVvo.",
+  "..ovvVVVnnVVVvvo..",
+  "...oo.oVVVVo.oo...",
+  ".......oooo.......",
+]), sprite([
+  "..................",
+  "..................",
+  ".......o..o.......",
+  ".......oVVo.......",
+  "......oVVVVo......",
+  "..oooooVpVVpVooooo..",
+  ".ovVVVVVVVVVVVVVvo.",
+  "oVVVVvoVVnnVovVVVVo",
+  "oVVvo.ooVVVVoo.ovVVo",
+  "ooo.....oooo.....ooo",
+])];
+
+// Boss: an ogre, recoloured each time it appears
+const OGRE_ROWS = [
+  "........oooooooo........",
+  "......ooAAAAAAAAoo......",
+  ".....oAAAAAAAAAAAAo.....",
+  "....oAAAAAAAAAAAAAAo....",
+  "..ooAAoooAAAAAAoooAAoo..",
+  ".oAoAAAoxoAAAAoxoAAAoAo.",
+  ".oAAAAAAAAAAAAAAAAAAAAo.",
+  "..oAAAAAAAaaaaAAAAAAAo..",
+  "..oAAAAnAAAAAAAAnAAAAo..",
+  "...oAAAnoooooooonAAAo...",
+  "....oAAAAAAAAAAAAAAo....",
+  "..ooooAAAAAAAAAAAAoooo..",
+  ".oAAAAoAAAAAAAAAAoAAAAo.",
+  "oAAAAAAoAAAAAAAAoAAAAAAo",
+  "oAAaAAAAoAAAAAAoAAAAaAAo",
+  "oAAaoAAAAAAAAAAAAAAoaAAo",
+  "oAAo.oAAAAAAAAAAAAo.oAAo",
+  "oAAo.oAAAAaaaaAAAAo.oAAo",
+  "oAAo.ottttttttttttooAAAo",
+  ".oo..otTttTttTttTto.ooo.",
+  ".....otttttttttttto.....",
+  "......otttto.otttto.....",
+  "......oAAAo...oAAAo.....",
+  "......oAAAo...oAAAo.....",
+  ".....oAAAAo...oAAAAo....",
+  ".....oooooo...oooooo....",
+];
+const OGRE_COLORS = [
+  { A: "#7fae5a", a: "#5a8a3e", burst: ["#7fae5a", "#5a8a3e", "#c9e28a"] },
+  { A: "#d8684e", a: "#9e3e30", burst: ["#d8684e", "#9e3e30", "#ffb08a"] },
+  { A: "#7a86e0", a: "#4f58a8", burst: ["#7a86e0", "#4f58a8", "#c2c8ff"] },
+  { A: "#b97ad6", a: "#7d4a9c", burst: ["#b97ad6", "#7d4a9c", "#efc2ff"] },
+];
+const OGRES = OGRE_COLORS.map(c => sprite(OGRE_ROWS, { ...PAL, A: c.A, a: c.a, x: "#ffd55a", n: "#f4f1ea" }));
+
+const HEART = sprite([".ff.ff.", "fFQFFFf", "fFFFFFf", ".fFFFf.", "..fFf..", "...f..."]);
+const HEART_EMPTY = sprite([".oo.oo.", "o..o..o", "o.....o", ".o...o.", "..o.o..", "...o..."]);
+
+const ENEMY_TYPES = [
+  { name: "slime",  frames: SLIME,  burst: ["#6fdc6a", "#9ff28e", "#3a9a48"], anim: 3 },
+  { name: "goblin", frames: GOBLIN, burst: ["#7fbf4a", "#8a5a32", "#4f8a2e"], anim: 6 },
+  { name: "bat",    frames: BAT,    burst: ["#8a4fc9", "#5d2f94", "#ff6f9a"], anim: 9, fly: true },
+];
+
+// ============================================================
+//  BACKGROUND — painted once into its own canvas
+// ============================================================
+const BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+function rng(seed) { return () => (seed = (seed * 16807) % 2147483647) / 2147483647; }
+const bg = document.createElement("canvas"); bg.width = LW; bg.height = LH;
+let stars = [];
+(function paintBackground() {
+  const g = bg.getContext("2d"), r = rng(42);
+  const SKY = ["#140d2e", "#1f1544", "#2e1d5c", "#472873", "#683485", "#934388", "#c15a86", "#e57d7f", "#f7a978"];
+  const horizon = 112;
+  for (let y = 0; y < horizon; y++) for (let x = 0; x < LW; x++) {
+    const t = (y / horizon) * (SKY.length - 1) + (BAYER[y % 4][x % 4] / 16 - 0.5);
+    g.fillStyle = SKY[Math.max(0, Math.min(SKY.length - 1, Math.round(t)))]; g.fillRect(x, y, 1, 1);
+  }
+  // stars (some twinkle later)
+  for (let i = 0; i < 70; i++) {
+    const x = r() * LW | 0, y = r() * 60 | 0;
+    stars.push({ x, y, ph: r() * 6, tw: r() < 0.3 });
+    g.fillStyle = r() < 0.2 ? "#fff6c9" : "#b9a8e8"; g.fillRect(x, y, 1, 1);
+  }
+  // moon
+  const mx = 262, my = 30, mr = 15;
+  for (let y = -mr; y <= mr; y++) for (let x = -mr; x <= mr; x++) {
+    const d = Math.hypot(x, y);
+    if (d <= mr + 3 && d > mr) { if ((x + y) & 1) { g.fillStyle = "rgba(255,240,200,0.18)"; g.fillRect(mx + x, my + y, 1, 1); } }
+    if (d <= mr) { g.fillStyle = (x + y > 10 && d > mr - 4) ? "#f0d99a" : "#fff3cf"; g.fillRect(mx + x, my + y, 1, 1); }
+  }
+  g.fillStyle = "#e8cf8e"; [[-5, -4, 3], [4, 3, 2], [-2, 6, 2], [6, -6, 1]].forEach(([x, y, s]) => g.fillRect(mx + x, my + y, s, s));
+  // clouds
+  function cloud(cx, cy, w, c, c2) { g.fillStyle = c; for (let i = 0; i < w; i += 6) { const h = 3 + Math.round(Math.sin(i * 0.7 + cx) * 2 + 2); g.fillRect(cx + i, cy - h, 8, h + 3); } g.fillStyle = c2; g.fillRect(cx + 2, cy + 2, w, 2); }
+  cloud(20, 36, 48, "#7b4a92", "#5d3a80"); cloud(150, 24, 40, "#6a3f8c", "#4f3278"); cloud(205, 58, 56, "#b65f8d", "#8f4c88");
+  // far mountains
+  function ridge(base, amp, freq, seed, col, edge) {
+    const rr = rng(seed); let h = 0, prev = [];
+    for (let x = 0; x < LW; x++) {
+      h = base - amp * (0.55 + 0.45 * Math.sin(x * freq + seed)) - Math.abs(Math.sin(x * freq * 2.7 + seed * 2)) * amp * 0.5 - (rr() * 2 | 0);
+      prev.push(Math.round(h));
+    }
+    prev.forEach((top, x) => { g.fillStyle = col; g.fillRect(x, top, 1, LH - top); if (edge) { g.fillStyle = edge; g.fillRect(x, top, 1, 1); } });
+    return prev;
+  }
+  ridge(96, 34, 0.035, 3, "#3b2766", "#5a3d86");
+  ridge(108, 20, 0.06, 7, "#2a1d52", "#3d2a6b");
+  // pine forest silhouette
+  for (let x = -4; x < LW; x += 5 + (r() * 5 | 0)) {
+    const h = 10 + (r() * 12 | 0), base = 114;
+    g.fillStyle = "#1c1540";
+    for (let i = 0; i < h; i++) { const w = Math.max(1, Math.round(i * 0.45)); g.fillRect(x - w, base - h + i, w * 2 + 1, 1); }
+  }
+  // ground
+  const groundTop = 112;
+  for (let y = groundTop; y < LH; y++) for (let x = 0; x < LW; x++) {
+    let c = "#3f8a3e";
+    if (y < groundTop + 2) c = "#7cc55a"; else if (y < groundTop + 4) c = (BAYER[y % 4][x % 4] > 7) ? "#5aa847" : "#7cc55a";
+    else if (y >= 120 && y <= 150) {         // dirt path
+      const edge = (y === 120 || y === 150) ? true : (y < 123 || y > 147) && BAYER[y % 4][x % 4] > 9;
+      c = edge ? "#7a5432" : (BAYER[y % 4][x % 4] > 13 ? "#b98852" : "#a3744a");
+    } else if (BAYER[y % 4][x % 4] === 15 && r() < 0.5) c = "#357a36";
+    g.fillStyle = c; g.fillRect(x, y, 1, 1);
+  }
+  // pebbles, grass tufts, flowers
+  for (let i = 0; i < 40; i++) { g.fillStyle = r() < .5 ? "#8a6240" : "#c9a06a"; g.fillRect(60 + r() * 260 | 0, 124 + r() * 22 | 0, 2, 1); }
+  for (let i = 0; i < 70; i++) {
+    const x = r() * LW | 0, y = r() < .5 ? 113 + (r() * 6 | 0) : 153 + (r() * 25 | 0);
+    g.fillStyle = "#2f6e30"; g.fillRect(x, y, 1, 2); g.fillRect(x + 2, y, 1, 2); g.fillStyle = "#5aa847"; g.fillRect(x + 1, y - 1, 1, 3);
+  }
+  for (let i = 0; i < 26; i++) {
+    const x = r() * LW | 0, y = r() < .4 ? 114 + (r() * 5 | 0) : 154 + (r() * 24 | 0);
+    g.fillStyle = ["#ffd55a", "#ff8fb1", "#f4f1ea", "#9fd0ff"][r() * 4 | 0]; g.fillRect(x, y, 1, 1);
+  }
+  // village houses
+  function house(x, y, w, h, wall, roof) {
+    g.fillStyle = "#1a1033"; g.fillRect(x - 1, y - 1, w + 2, h + 2);
+    g.fillStyle = wall; g.fillRect(x, y, w, h);
+    g.fillStyle = "rgba(0,0,0,.18)"; g.fillRect(x + w - 3, y, 3, h);
+    for (let i = 0; i < 4; i++) { g.fillStyle = "rgba(0,0,0,.12)"; g.fillRect(x + 2, y + 3 + i * 5, w - 6, 1); }
+    // roof
+    for (let i = 0; i <= w / 2 + 2; i++) {
+      g.fillStyle = "#1a1033"; g.fillRect(x - 3 + i, y - i - 1, w + 6 - i * 2, 1);
+      g.fillStyle = i % 3 === 0 ? "#7a2a3a" : roof; g.fillRect(x - 2 + i, y - i - 1, w + 4 - i * 2, 1);
+    }
+    // window + door
+    g.fillStyle = "#1a1033"; g.fillRect(x + 2, y + 4, 6, 6); g.fillStyle = "#ffd55a"; g.fillRect(x + 3, y + 5, 4, 4); g.fillStyle = "#fff3a8"; g.fillRect(x + 3, y + 5, 2, 2);
+    g.fillStyle = "#1a1033"; g.fillRect(x + w - 9, y + h - 9, 6, 9); g.fillStyle = "#6b3f22"; g.fillRect(x + w - 8, y + h - 8, 4, 8);
+  }
+  house(3, 96, 20, 18, "#d9a066", "#b4404f");
+  house(-6, 120, 22, 22, "#e8c08a", "#9a3048");
+  house(20, 128, 18, 18, "#c98a55", "#b4404f");
+  // stone tower the wizard stands on
+  const tx = 52, ty = 76, tw = 26;
+  g.fillStyle = "#1a1033"; g.fillRect(tx - 1, ty - 1, tw + 2, 120 - ty + 30);
+  for (let y = ty; y < 150; y++) for (let x = tx; x < tx + tw; x++) {
+    const row = (y - ty) >> 2, off = (row & 1) * 3;
+    const mortar = ((y - ty) % 4 === 3) || ((x - tx + off) % 6 === 5);
+    let c = mortar ? "#55526e" : (x > tx + tw - 5 ? "#77748f" : "#9a97b3");
+    if (!mortar && (x - tx + off) % 6 === 0) c = "#b8b5cf";
+    g.fillStyle = c; g.fillRect(x, y, 1, 1);
+  }
+  for (let i = 0; i < 4; i++) { const cx = tx + 1 + i * 7; g.fillStyle = "#1a1033"; g.fillRect(cx - 1, ty - 6, 6, 6); g.fillStyle = "#9a97b3"; g.fillRect(cx, ty - 5, 4, 5); g.fillStyle = "#b8b5cf"; g.fillRect(cx, ty - 5, 4, 1); }
+  // banner on tower
+  g.fillStyle = "#1a1033"; g.fillRect(tx + 9, ty + 8, 9, 14); g.fillStyle = "#b4404f"; g.fillRect(tx + 10, ty + 9, 7, 11);
+  g.fillStyle = "#ffd55a"; g.fillRect(tx + 13, ty + 12, 1, 4); g.fillRect(tx + 12, ty + 13, 3, 1);
+  g.fillStyle = "#b4404f"; g.fillRect(tx + 10, ty + 20, 2, 1); g.fillRect(tx + 15, ty + 20, 2, 1);
+})();
+
+// ============================================================
+//  SOUND — little chiptune effects made with Web Audio (no files)
+// ============================================================
+let actx = null, master = null, muted = false;
+function audioOn() {
+  try {
+    if (!actx) { actx = new (window.AudioContext || window.webkitAudioContext)(); master = actx.createGain(); master.gain.value = muted ? 0 : 0.6; master.connect(actx.destination); }
+    if (actx.state === "suspended") actx.resume();
+  } catch (e) {}
+}
+function tone(freq, dur, type = "square", vol = 0.1, slideTo = 0, delay = 0) {
+  if (!actx) return;
+  const t = actx.currentTime + delay, o = actx.createOscillator(), g = actx.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.02);
+}
+let noiseBuf = null;
+function noise(dur, vol = 0.2, freq = 1500, delay = 0) {
+  if (!actx) return;
+  if (!noiseBuf) { noiseBuf = actx.createBuffer(1, actx.sampleRate, actx.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+  const t = actx.currentTime + delay, s = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+  s.buffer = noiseBuf; f.type = "lowpass"; f.frequency.setValueAtTime(freq, t); f.frequency.exponentialRampToValueAtTime(100, t + dur);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t + dur + 0.02);
+}
+const SFX = {
+  key(n)   { tone(660 + n * 70, 0.05, "square", 0.05); },
+  miss()   { tone(150, 0.18, "sawtooth", 0.12, 70); },
+  cast()   { tone(300, 0.22, "square", 0.07, 1300); tone(600, 0.18, "triangle", 0.06, 1800, 0.03); },
+  boom()   { noise(0.4, 0.35, 2200); tone(140, 0.3, "triangle", 0.25, 40); },
+  hurt()   { noise(0.3, 0.3, 900); tone(220, 0.35, "square", 0.12, 60); },
+  wave()   { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.14, "square", 0.08, 0, i * 0.09)); },
+  bossWarn() { for (let i = 0; i < 3; i++) { tone(110, 0.22, "sawtooth", 0.14, 0, i * 0.32); tone(116, 0.22, "square", 0.08, 0, i * 0.32 + 0.12); } },
+  bossHit() { noise(0.3, 0.35, 1500); tone(90, 0.25, "square", 0.2, 45); tone(1200, 0.08, "square", 0.05, 600); },
+  stomp()  { tone(60, 0.12, "triangle", 0.18, 40); },
+  bossDie() { noise(0.8, 0.4, 3000); [392, 523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.18, "square", 0.08, 0, 0.25 + i * 0.08)); },
+  spellReady() { [784, 988, 1175].forEach((f, i) => tone(f, 0.1, "triangle", 0.08, 0, i * 0.05)); },
+  learn()  { [523, 659, 784, 1047, 784, 1047].forEach((f, i) => tone(f, 0.16, "square", 0.07, 0, i * 0.11)); },
+  freeze() { for (let i = 0; i < 8; i++) tone(1800 + Math.random() * 1200, 0.25, "sine", 0.05, 0, i * 0.04); noise(0.5, 0.08, 6000); },
+  thunder(){ noise(0.7, 0.45, 5000); tone(80, 0.6, "sawtooth", 0.15, 40); },
+  heal()   { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.25, "sine", 0.1, 0, i * 0.07)); },
+  meteorFall() { tone(1400, 0.45, "square", 0.05, 200); noise(0.45, 0.08, 1200); },
+  tornado(){ noise(1.2, 0.25, 800); tone(200, 1.0, "sawtooth", 0.04, 600); },
+  over()   { [392, 330, 262, 196].forEach((f, i) => tone(f, 0.3, "triangle", 0.15, 0, i * 0.22)); },
+};
+const muteBtn = document.getElementById("muteBtn"), topBtns = document.getElementById("topBtns");
+muteBtn.addEventListener("click", () => {
+  muted = !muted; audioOn();
+  if (master) master.gain.value = muted ? 0 : 0.6;
+  muteBtn.textContent = muted ? "♪ SOUND OFF" : "♪ SOUND ON";
+  muteBtn.blur();
+});
+
+// ============================================================
+//  GAME FLOW
+// ============================================================
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function nextWord() {
+  for (let tries = 0; tries < 30; tries++) {
+    if (deck.length === 0) deck = shuffle(WORDS.slice());
+    const w = deck.pop();
+    if (!enemies.some(e => e.word.en === w.en)) return w;
+  }
+  return WORDS[Math.random() * WORDS.length | 0];
+}
+
+function startGame(words) {
+  audioOn();
+  if (document.activeElement) document.activeElement.blur();
+  WORDS = words;
+  enemies = []; fireballs = []; particles = []; floaters = [];
+  target = null; typed = "";
+  score = 0; lives = 5; wave = 0; combo = 0; shake = 0;
+  deck = [];
+  mana = 0; known = []; spellMode = false; spellTyped = ""; freezeTimer = 0; flash = 0;
+  bolts = []; meteors = []; tornados = []; learned = null; learnTimer = 0;
+  state = "play";
+  document.getElementById("title").classList.add("hidden");
+  topBtns.classList.remove("hidden");
+  document.getElementById("over").classList.add("hidden");
+  nextWave();
+}
+
+function nextWave() {
+  wave++;
+  spawnLeft = 4 + wave * 2;
+  spawnTimer = 1.5;
+  waveBanner = 2.2;
+  bossState = "waiting";       // waiting -> warning -> fighting -> done
+  bannerText = "- WAVE " + wave + " -";
+  SFX.wave();
+}
+
+// ---- BOSS SETTINGS ----
+// how many words it takes to beat the boss on each wave
+function bossHp(w) { return 3 + Math.floor((w - 1) / 2); }   // wave1-2: 3, wave3-4: 4, ...
+const BOSS_DAMAGE = 2;         // hearts lost if the boss reaches the village
+let bossState = "done", bossTimer = 0, bannerText = "";
+
+function spawnBoss() {
+  const hp = bossHp(wave);
+  const look = (wave - 1) % OGRES.length;
+  const w = nextWord();
+  enemies.push({
+    boss: true, img: OGRES[look], type: { burst: OGRE_COLORS[look].burst },
+    word: w, jp: !!w.jp && Math.random() < JP_CHANCE,
+    hp, maxHp: hp, pending: hp,
+    x: W + 80, y: 590, baseY: 590,
+    speed: BOSS_SPEED + wave * 3,
+    t: 0, hitFlash: 0, dying: false, knock: 0, lastStep: 0,
+  });
+}
+
+function spawnEnemy() {
+  const t = ENEMY_TYPES[Math.random() * ENEMY_TYPES.length | 0];
+  const lanes = t.fly ? AIR_LANES : GROUND_LANES;
+  const y = lanes[Math.random() * lanes.length | 0];
+  const w = nextWord();
+  enemies.push({
+    type: t, word: w, jp: !!w.jp && Math.random() < JP_CHANCE,
+    x: W + 60, y, baseY: y,
+    speed: BASE_SPEED + wave * 7 + Math.random() * 12,
+    t: Math.random() * 6, hitFlash: 0, dying: false,
+  });
+}
+
+// ============================================================
+//  TYPING
+// ============================================================
+function answerOf(e) { return e.word.en.toLowerCase(); }
+
+window.addEventListener("keydown", (ev) => {
+  if (state !== "play") return;
+  audioOn();
+  if (ev.key === "Process" || ev.isComposing || ev.keyCode === 229) { showIme(); ev.preventDefault(); return; }
+  if (ev.key === "Backspace" || ev.key === "Escape") { target = null; typed = ""; spellMode = false; ev.preventDefault(); return; }
+  if (ev.key === " ") {
+    ev.preventDefault();
+    if (!spellMode && target) {                        // in the middle of a word/phrase
+      if (answerOf(target)[typed.length] === " ") { typed += " "; SFX.key(typed.length); }
+      else miss();
+      return;
+    }
+    toggleSpellMode(); return;
+  }
+  if (ev.key.length !== 1) return;
+  const k = ev.key.toLowerCase();
+  if (!/[a-z'-]/.test(k)) return;
+  ev.preventDefault();
+
+  if (spellMode) { typeSpell(k); return; }
+
+  if (!target) {
+    const choices = enemies.filter(e => !e.dying && answerOf(e)[0] === k).sort((a, b) => a.x - b.x);
+    if (choices.length === 0) { miss(); return; }
+    target = choices[0];
+    typed = k;
+  } else {
+    const ans = answerOf(target);
+    if (ans[typed.length] === k) typed += k;
+    else { miss(); return; }
+  }
+  sparkle(ORB.x, ORB.y, 3);
+  if (typed === answerOf(target)) castSpell(target);
+  else SFX.key(typed.length);
+});
+
+// ============================================================
+//  SPELLS — charge MANA with correct words, press SPACE, type the spell name.
+//  A new spell is learned after each boss (in this order).
+// ============================================================
+const SPELLS = [
+  { name: "freeze",  jp: "こおらせる", color: "#9fe8ff", info: "Slow all monsters / モンスターがおそくなる" },
+  { name: "thunder", jp: "かみなり",   color: "#ffe45a", info: "Hit every monster / 全部のモンスターにあたる" },
+  { name: "heal",    jp: "かいふく",   color: "#7cf08a", info: "Get 1 heart back / ハートが1つもどる" },
+  { name: "meteor",  jp: "いんせき",   color: "#ff8a3d", info: "Big damage to the boss / ボスに大ダメージ" },
+  { name: "tornado", jp: "たつまき",   color: "#c9b6ff", info: "Blow monsters back / モンスターをふきとばす" },
+];
+const MANA_MAX = 100;
+function manaFor(len) { return 10 + len * 2; }     // a 5-letter word gives 20 mana
+
+let mana = 0, known = [], spellMode = false, spellTyped = "";
+let freezeTimer = 0, bolts = [], meteors = [], tornados = [], learned = null, learnTimer = 0;
+
+function gainMana(len) { if (known.length) mana = Math.min(MANA_MAX, mana + manaFor(len)); }
+
+function toggleSpellMode() {
+  if (spellMode) { spellMode = false; spellTyped = ""; return; }
+  if (!known.length) { floaters.push({ x: W / 2, y: H - 140, text: "No spells yet! / まだ魔法がない", life: 1.2, small: true }); SFX.miss(); return; }
+  if (mana < MANA_MAX) { floaters.push({ x: W / 2, y: H - 140, text: "Mana not full! / MPがたりない", life: 1.2, small: true }); SFX.miss(); return; }
+  spellMode = true; spellTyped = ""; target = null; typed = "";
+  SFX.spellReady();
+}
+
+function typeSpell(k) {
+  const next = spellTyped + k;
+  if (!known.some(s => s.name.startsWith(next))) { SFX.miss(); shake = 0.15; return; }
+  spellTyped = next;
+  sparkle(ORB.x, ORB.y, 4);
+  const s = known.find(s => s.name === spellTyped);
+  if (s) { castMagic(s); spellMode = false; spellTyped = ""; mana = 0; }
+  else SFX.key(spellTyped.length);
+}
+
+function alive() { return enemies.filter(e => !e.dying && !e.dead); }
+
+// damage any enemy instantly (used by spells)
+function zap(e, hits = 1) {
+  if (e.dying || e.dead) return;
+  if (e.boss) {
+    for (let i = 0; i < hits && e.pending > 0; i++) { e.pending--; e.hp--; }
+    if (target === e) { target = null; typed = ""; }
+    if (e.pending <= 0) { killBoss(e); return; }
+    const w = nextWord(); e.word = w; e.jp = !!w.jp && Math.random() < JP_CHANCE;
+    e.hitFlash = 0.3; e.knock = 60;
+    burst(e.x, e.y - 56, e.type.burst, 20);
+    score += 50; floaters.push({ x: e.x, y: e.y - 160, text: "+50", life: 1 });
+  } else {
+    e.dead = true;
+    if (target === e) { target = null; typed = ""; }
+    burst(e.x, e.y - 28, e.type.burst, 22);
+    score += 20; floaters.push({ x: e.x, y: e.y - 70, text: "+20", life: 1 });
+  }
+}
+
+function killBoss(e) {
+  e.dead = true;
+  const tx = e.x, ty = e.y - 56;
+  for (let i = 0; i < 4; i++) burst(tx + (Math.random() - .5) * 80, ty + (Math.random() - .5) * 80, e.type.burst, 30);
+  burst(tx, ty, ["#ffd55a", "#fff3a8", "#ff9a2e"], 50);
+  shake = 0.6; SFX.bossDie();
+  score += 100 * wave;
+  floaters.push({ x: tx, y: ty - 120, text: "BOSS DEFEATED!", life: 1.8, big: true });
+  learnNextSpell();
+}
+
+function learnNextSpell() {
+  if (known.length >= SPELLS.length) return;
+  learned = SPELLS[known.length];
+  known.push(learned);
+  learnTimer = 3.2;
+  setTimeout(() => SFX.learn(), 900);
+}
+
+function castMagic(s) {
+  shake = 0.3;
+  floaters.push({ x: W / 2, y: 340, text: s.name.toUpperCase() + "!", life: 1.2, big: true, color: s.color });
+  if (s.name === "freeze") {
+    freezeTimer = 5; SFX.freeze();
+    for (const e of alive()) burst(e.x, e.y - 30, ["#9fe8ff", "#ffffff", "#5fc8ff"], 10);
+  }
+  if (s.name === "thunder") {
+    SFX.thunder();
+    for (const e of alive()) { bolts.push(makeBolt(e)); zap(e, 1); }
+    flash = 0.25;
+  }
+  if (s.name === "heal") {
+    lives = Math.min(5, lives + 1); SFX.heal();
+    for (let i = 0; i < 24; i++) particles.push({ x: 24 + Math.random() * 200, y: 60, vx: (Math.random() - .5) * 60, vy: -60 - Math.random() * 120, life: 1, max: 1, c: Math.random() < .5 ? "#7cf08a" : "#fff", s: 2, g: 0 });
+  }
+  if (s.name === "meteor") {
+    const boss = alive().find(e => e.boss);
+    const tgt = boss || alive().sort((a, b) => a.x - b.x)[0];
+    const tx = tgt ? tgt.x : W * 0.6, ty = tgt ? tgt.y - 30 : 540;
+    meteors.push({ x: tx + 500, y: -80, tx, ty, target: tgt });
+    SFX.meteorFall();
+  }
+  if (s.name === "tornado") {
+    SFX.tornado();
+    tornados.push({ x: ORB.x, life: 1.4 });
+    for (const e of alive()) e.knock = e.boss ? 260 : 420;
+  }
+}
+
+function makeBolt(e) {
+  const pts = []; let x = L(e.x) + (Math.random() * 20 - 10 | 0);
+  const end = L(e.y) - 8;
+  for (let y = 0; y <= end; y += 6) { pts.push([x, y]); x += (Math.random() * 7 | 0) - 3; }
+  pts.push([L(e.x), end]);
+  return { pts, life: 0.35 };
+}
+
+let flash = 0;
+function updateMagic(dt) {
+  if (freezeTimer > 0) {
+    freezeTimer -= dt;
+    if (Math.random() < dt * 30) particles.push({ x: Math.random() * W, y: -10, vx: (Math.random() - .5) * 40, vy: 80 + Math.random() * 80, life: 4, max: 4, c: "#e8f8ff", s: 1, g: 0 });
+  }
+  if (flash > 0) flash -= dt;
+  if (learnTimer > 0) learnTimer -= dt;
+  for (const b of bolts) b.life -= dt;
+  bolts = bolts.filter(b => b.life > 0);
+  for (const m of meteors) {
+    const dx = m.tx - m.x, dy = m.ty - m.y, d = Math.hypot(dx, dy), sp = 1100 * dt;
+    for (let i = 0; i < 3; i++) particles.push({ x: m.x + (Math.random() - .5) * 30, y: m.y + (Math.random() - .5) * 30, vx: 0, vy: -30, life: .4, max: .4, c: ["#ffd55a", "#ff8a3d", "#ff4a2e", "#6b4a3a"][Math.random() * 4 | 0], s: 2, g: 0 });
+    if (d <= sp) {
+      m.done = true; shake = 0.7; flash = 0.15; SFX.boom(); SFX.bossHit();
+      burst(m.tx, m.ty, ["#ffd55a", "#ff8a3d", "#ff4a2e", "#6b4a3a"], 60);
+      for (const e of alive()) {
+        if (e.boss) zap(e, 2);
+        else if (Math.abs(e.x - m.tx) < 260) zap(e, 1);
+      }
+    } else { m.x += dx / d * sp; m.y += dy / d * sp; }
+  }
+  meteors = meteors.filter(m => !m.done);
+  for (const t of tornados) { t.x += 900 * dt; t.life -= dt; }
+  tornados = tornados.filter(t => t.life > 0 && t.x < W + 200);
+}
+
+function drawMagic() {
+  if (freezeTimer > 0) { lx.fillStyle = `rgba(140,210,255,${Math.min(.22, freezeTimer * .1)})`; lx.fillRect(0, 0, LW, LH); }
+  for (const b of bolts) {
+    for (let i = 1; i < b.pts.length; i++) {
+      const [x0, y0] = b.pts[i - 1], [x1, y1] = b.pts[i];
+      const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
+      for (let j = 0; j <= n; j++) {
+        const x = Math.round(x0 + (x1 - x0) * j / n), y = Math.round(y0 + (y1 - y0) * j / n);
+        lx.fillStyle = "#ffe45a"; lx.fillRect(x - 1, y, 3, 1);
+        lx.fillStyle = "#fff"; lx.fillRect(x, y, 1, 1);
+      }
+    }
+  }
+  for (const m of meteors) {
+    const x = L(m.x), y = L(m.y);
+    lx.fillStyle = "#1a1033"; lx.fillRect(x - 5, y - 4, 10, 8); lx.fillRect(x - 4, y - 5, 8, 10);
+    lx.fillStyle = "#8a5a3a"; lx.fillRect(x - 4, y - 3, 8, 6); lx.fillRect(x - 3, y - 4, 6, 8);
+    lx.fillStyle = "#ff8a3d"; lx.fillRect(x - 3, y - 3, 3, 3); lx.fillStyle = "#ffd55a"; lx.fillRect(x - 2, y - 2, 1, 1);
+  }
+  for (const t of tornados) {
+    const cx = L(t.x);
+    for (let i = 0; i < 40; i++) {
+      const y = 150 - i * 2, w = 3 + i * 0.6, off = Math.round(Math.sin(clock * 14 + i * 0.4) * (2 + i * .15));
+      lx.fillStyle = i % 3 === 0 ? "#ffffff" : (i % 3 === 1 ? "#c9b6ff" : "#8a7ad0");
+      lx.fillRect(cx - Math.round(w / 2) + off, y, Math.round(w), 1);
+    }
+  }
+}
+
+let imeTimer = 0;
+function showIme() { document.getElementById("imeWarn").classList.remove("hidden"); imeTimer = 2.5; }
+
+function miss() {
+  combo = 0;
+  shake = 0.2;
+  if (target) target.hitFlash = 0.15;
+  SFX.miss();
+}
+
+function castSpell(e) {
+  combo++;
+  let pts = 10 * e.word.en.length + Math.min(combo, 10) * 5;
+  let final = true;
+  if (e.boss) {
+    e.pending--;
+    final = e.pending <= 0;
+    if (!final) { const w = nextWord(); e.word = w; e.jp = !!w.jp && Math.random() < JP_CHANCE; }  // next word right away
+  }
+  if (final) e.dying = true;
+  score += pts;
+  gainMana(e.word.en.length);
+  SFX.cast();
+  fireballs.push({ x: ORB.x, y: ORB.y, target: e, pts, final, big: !!e.boss });
+  sparkle(ORB.x, ORB.y, 10);
+  target = null; typed = "";
+}
+
+// ============================================================
+//  UPDATE
+// ============================================================
+function update(dt) {
+  clock += dt;
+  if (imeTimer > 0) { imeTimer -= dt; if (imeTimer <= 0) document.getElementById("imeWarn").classList.add("hidden"); }
+  if (state !== "play") { updateFx(dt); return; }
+
+  if (waveBanner > 0) waveBanner -= dt;
+  if (shake > 0) shake -= dt;
+
+  if (spawnLeft > 0) {
+    spawnTimer -= dt;
+    if (spawnTimer <= 0) {
+      spawnEnemy(); spawnLeft--;
+      spawnTimer = Math.max(1.2, 3.4 - wave * 0.25) + Math.random();
+    }
+  } else if (bossState === "waiting" && enemies.length === 0 && fireballs.length === 0) {
+    bossState = "warning"; bossTimer = 2.2;
+    bannerText = "!! BOSS !!"; waveBanner = 2.2;
+    SFX.bossWarn();
+  } else if (bossState === "warning") {
+    bossTimer -= dt;
+    if (bossTimer <= 0) { spawnBoss(); bossState = "fighting"; }
+  } else if (bossState === "fighting" && enemies.length === 0 && fireballs.length === 0) {
+    bossState = "done";
+    bossTimer = learnTimer > 0 ? learnTimer + 0.3 : 1.5;
+  } else if (bossState === "done") {
+    bossTimer -= dt;
+    if (bossTimer <= 0) nextWave();
+  }
+
+  updateMagic(dt);
+  const slow = freezeTimer > 0 ? 0.2 : 1;
+  for (const e of enemies) {
+    e.t += dt * slow;
+    if (e.hitFlash > 0) e.hitFlash -= dt;
+    if (e.dying) continue;
+    if (e.knock > 0) { const k = Math.min(e.knock, 600 * dt); e.x = Math.min(W + 40, e.x + k); e.knock -= k; }
+    else e.x -= e.speed * dt * slow;
+    if (e.boss) {
+      const step = Math.floor(e.t * 2);
+      if (step !== e.lastStep) { e.lastStep = step; SFX.stomp(); }
+    } else {
+      e.y = e.baseY + (e.type.fly ? Math.round(Math.sin(e.t * 3) * 4) * PX : 0);
+    }
+    if (e.x < WALL_X + (e.boss ? 40 : 0)) {
+      e.dead = true;
+      lives -= e.boss ? BOSS_DAMAGE : 1; shake = e.boss ? 0.7 : 0.4; combo = 0;
+      SFX.hurt();
+      burst(WALL_X, e.y - 20, ["#77748f", "#9a97b3", "#55526e"], e.boss ? 40 : 16);
+      if (target === e) { target = null; typed = ""; }
+      if (lives <= 0) endGame();
+    }
+  }
+  enemies = enemies.filter(e => !e.dead);
+
+  for (const f of fireballs) {
+    if (f.target.dead) { f.done = true; sparkle(f.x, f.y, 6); continue; }
+    const tx = f.target.x, ty = f.target.y - (f.big ? 56 : 28);
+    const dx = tx - f.x, dy = ty - f.y, d = Math.hypot(dx, dy);
+    const sp = 1300 * dt;
+    particles.push({ x: f.x, y: f.y, vx: (Math.random() - .5) * 80, vy: (Math.random() - .5) * 80, life: .3, max: .3, c: CHARACTERS[hero].fire[Math.random() * 3 | 0], s: 2, g: 0 });
+    if (d <= sp) {
+      f.done = true;
+      const e = f.target;
+      if (f.final) {
+        if (e.boss) killBoss(e);
+        else {
+          e.dead = true;
+          burst(tx, ty, e.type.burst, 26);
+          burst(tx, ty, CHARACTERS[hero].fire, 18);
+          SFX.boom();
+        }
+      } else {                                   // boss takes a hit but keeps going
+        e.hp--; e.hitFlash = 0.25; e.knock = 70; shake = 0.25;
+        burst(tx, ty, e.type.burst, 16);
+        burst(tx, ty, CHARACTERS[hero].fire, 14);
+        SFX.bossHit();
+      }
+      floaters.push({ x: tx, y: ty - 50, text: "+" + f.pts, life: 1 });
+    } else { f.x += dx / d * sp; f.y += dy / d * sp; }
+  }
+  fireballs = fireballs.filter(f => !f.done);
+  enemies = enemies.filter(e => !e.dead);
+
+  updateFx(dt);
+}
+
+function updateFx(dt) {
+  for (const p of particles) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += p.g * dt; p.life -= dt; }
+  particles = particles.filter(p => p.life > 0);
+  for (const f of floaters) { f.y -= 50 * dt; f.life -= dt; }
+  floaters = floaters.filter(f => f.life > 0);
+}
+
+function burst(x, y, cols, n) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, s = 120 + Math.random() * 320;
+    particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 120, life: .5 + Math.random() * .5, max: 1,
+      c: cols[Math.random() * cols.length | 0], s: 1 + (Math.random() * 2 | 0), g: 700 });
+  }
+}
+function sparkle(x, y, n) {
+  for (let i = 0; i < n; i++) particles.push({ x, y, vx: (Math.random() - .5) * 200, vy: -Math.random() * 200, life: .4, max: .4, c: Math.random() < .5 ? "#9fe8ff" : "#fff", s: 1, g: 200 });
+}
+
+function endGame() {
+  state = "over";
+  target = null; typed = "";
+  SFX.over();
+  topBtns.classList.add("hidden");
+  document.getElementById("finalScore").textContent = `Score ${score}　Wave ${wave}`;
+  setTimeout(() => document.getElementById("over").classList.remove("hidden"), 700);
+}
+
+// ============================================================
+//  DRAW
+// ============================================================
+function L(v) { return Math.round(v / PX); }   // full coords -> low-res pixel
+
+function draw() {
+  // ---- world (low-res) ----
+  lx.save();
+  if (shake > 0) lx.translate(Math.round((Math.random() - .5) * 4), Math.round((Math.random() - .5) * 4));
+  lx.drawImage(bg, 0, 0);
+  for (const s of stars) if (s.tw && Math.sin(clock * 3 + s.ph) > 0.6) { lx.fillStyle = "#fff"; lx.fillRect(s.x, s.y, 1, 1); lx.fillStyle = "rgba(255,255,255,.5)"; lx.fillRect(s.x - 1, s.y, 3, 1); lx.fillRect(s.x, s.y - 1, 1, 3); }
+
+  drawWizard();
+  // enemies sorted back-to-front so lower lanes overlap
+  for (const e of [...enemies].sort((a, b) => a.y - b.y)) drawEnemy(e);
+  for (const f of fireballs) {
+    const x = L(f.x), y = L(f.y);
+    const F = CHARACTERS[hero].fire;
+    lx.fillStyle = F[0]; lx.fillRect(x - 2, y - 1, 5, 3); lx.fillRect(x - 1, y - 2, 3, 5);
+    lx.fillStyle = F[2]; lx.fillRect(x - 1, y - 1, 3, 3);
+    lx.fillStyle = "#fff"; lx.fillRect(x, y, 1, 1);
+  }
+  drawMagic();
+  for (const p of particles) { if (p.life / p.max < .3 && (Math.floor(clock * 30) & 1)) continue; lx.fillStyle = p.c; lx.fillRect(L(p.x), L(p.y), p.s, p.s); }
+  lx.restore();
+
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(low, 0, 0, W, H);
+  if (flash > 0) { ctx.fillStyle = `rgba(255,255,230,${flash * 2})`; ctx.fillRect(0, 0, W, H); }
+
+  // ---- crisp overlay: labels, HUD ----
+  if (waveBanner > 0 && state === "play" && !(waveBanner < .5 && Math.floor(clock * 16) & 1))
+    text(bannerText, W / 2, 200, 84, bossState === "warning" ? "#ff5a5a" : "#ffd55a", bossState === "warning" ? "#1a1033" : "#b4404f");
+  for (const e of enemies) drawLabel(e);
+  for (const f of floaters) { if (f.life < .3 && (Math.floor(clock * 20) & 1)) continue; text(f.text, Math.max(260, Math.min(W - 260, f.x)), f.y, f.big ? 56 : f.small ? 26 : 36, f.color || "#ffd55a", "#1a1033"); }
+  drawHud();
+}
+
+function drawWizard() {
+  const bob = Math.floor(clock * 2) % 2;
+  const C = CHARACTERS[hero], SPR = C.spr;
+  const x = 55, y = 76 - SPR.height + bob;   // standing on the tower
+  // staff
+  lx.fillStyle = "#1a1033"; lx.fillRect(x + 15, y + 2, 3, 22);
+  lx.fillStyle = "#8a5a32"; lx.fillRect(x + 16, y + 3, 1, 20);
+  lx.drawImage(SPR, x, y);
+  // glowing orb
+  const ox = L(ORB.x), oy = L(ORB.y) + bob;
+  const casting = !!target;
+  const pulse = (Math.floor(clock * (casting ? 12 : 3)) % 2);
+  lx.globalAlpha = 0.35; lx.fillStyle = casting ? C.fire[1] : C.orb;
+  lx.fillRect(ox - 4 - pulse, oy - 3, 9 + pulse * 2, 7); lx.fillRect(ox - 3, oy - 4 - pulse, 7, 9 + pulse * 2);
+  lx.globalAlpha = 1;
+  lx.fillStyle = "#1a1033"; lx.fillRect(ox - 2, oy - 2, 5, 5);
+  lx.fillStyle = casting ? C.fire[1] : C.orb; lx.fillRect(ox - 1, oy - 1, 3, 3);
+  lx.fillStyle = "#fff"; lx.fillRect(ox - 1, oy - 1, 1, 1);
+}
+
+function drawEnemy(e) {
+  if (e.dying) return drawEnemyShape(e, true);
+  drawEnemyShape(e, false);
+}
+function drawEnemyShape(e, dying) {
+  if (e.boss) {
+    const fr = e.img, stomp = Math.floor(e.t * 4) % 2;
+    const img = (e.hitFlash > 0 && Math.floor(clock * 30) & 1) ? fr.flash : fr;
+    const x = L(e.x) - (fr.width >> 1), y = L(e.y) - fr.height - stomp;
+    lx.fillStyle = "rgba(20,10,40,.4)"; lx.fillRect(x + 3, L(e.y) - 1, fr.width - 6, 2);
+    lx.drawImage(img, x, y);
+    // club
+    lx.fillStyle = "#1a1033"; lx.fillRect(x - 3, y + 8 + stomp, 5, 12); lx.fillRect(x - 2, y + 18 + stomp, 3, 4);
+    lx.fillStyle = "#8a5a32"; lx.fillRect(x - 2, y + 9 + stomp, 3, 10);
+    lx.fillStyle = "#5e3a1e"; lx.fillRect(x - 2, y + 11 + stomp, 1, 1); lx.fillRect(x, y + 14 + stomp, 1, 1);
+    return;
+  }
+  const fr = e.type.frames[Math.floor(e.t * e.type.anim / 2) % 2];
+  const img = (e.hitFlash > 0 || (dying && Math.floor(clock * 20) & 1)) ? fr.flash : fr;
+  const x = L(e.x) - (fr.width >> 1), y = L(e.y) - fr.height;
+  // shadow
+  if (!e.type.fly) { lx.fillStyle = "rgba(20,10,40,.35)"; lx.fillRect(x + 2, L(e.y) - 1, fr.width - 4, 2); }
+  else { lx.fillStyle = "rgba(20,10,40,.25)"; lx.fillRect(L(e.x) - 4, 148, 8, 1); }
+  lx.drawImage(img, x, y);
+}
+
+function text(s, x, y, size, fill, stroke, align = "center") {
+  ctx.font = `${size}px ${FONT}`;
+  ctx.textAlign = align; ctx.textBaseline = "middle";
+  if (stroke) {
+    ctx.fillStyle = stroke;
+    const o = Math.max(2, size / 12 | 0);
+    for (const [dx, dy] of [[-o, 0], [o, 0], [0, -o], [0, o], [-o, -o], [o, o], [-o, o], [o, -o], [o, o + o]]) ctx.fillText(s, x + dx, y + dy);
+  }
+  ctx.fillStyle = fill; ctx.fillText(s, x, y);
+}
+
+function pixelBox(x, y, w, h, fill, border, shadow = true) {
+  x = Math.round(x / 4) * 4; y = Math.round(y / 4) * 4; w = Math.round(w / 4) * 4; h = Math.round(h / 4) * 4;
+  if (shadow) { ctx.fillStyle = "rgba(10,5,25,.45)"; ctx.fillRect(x + 8, y + 8, w, h); }
+  ctx.fillStyle = "#1a1033"; ctx.fillRect(x + 4, y, w - 8, h); ctx.fillRect(x, y + 4, w, h - 8);
+  ctx.fillStyle = border; ctx.fillRect(x + 8, y + 4, w - 16, h - 8); ctx.fillRect(x + 4, y + 8, w - 8, h - 16);
+  ctx.fillStyle = fill; ctx.fillRect(x + 8, y + 8, w - 16, h - 16);
+  return { x, y, w, h };
+}
+
+function drawLabel(e) {
+  if (e.dying) return;
+  const isT = e === target;
+  const ans = e.word.en;
+  const fr = e.boss ? e.img : e.type.frames[0];
+  const h = e.jp ? 84 : 52;
+  const ly = e.y - fr.height * PX - (e.boss ? 44 : 16) - h / 2;
+  if (e.boss) {           // HP bar: one block per word left
+    const bw = 28, gap = 6, total = e.maxHp * (bw + gap) - gap;
+    const bx = Math.round((e.x - total / 2) / 4) * 4, by = Math.round((ly - h / 2 - 34) / 4) * 4;
+    ctx.fillStyle = "#1a1033"; ctx.fillRect(bx - 6, by - 6, total + 12, 28);
+    for (let i = 0; i < e.maxHp; i++) {
+      const on = i < e.hp;
+      ctx.fillStyle = on ? "#ff4d6d" : "#3d2a5c"; ctx.fillRect(bx + i * (bw + gap), by, bw, 16);
+      if (on) { ctx.fillStyle = "#ffc2cf"; ctx.fillRect(bx + i * (bw + gap), by, bw, 4); }
+    }
+  }
+
+  ctx.font = `30px ${FONT}`;
+  const main = e.jp ? e.word.jp : ans;
+  const sub = e.jp ? ans.split("").map((c, i) => c === " " ? " " : (isT && i < typed.length) ? c : "_").join(" ") : null;
+  let w = ctx.measureText(main).width;
+  if (sub) { ctx.font = `26px ${FONT}`; w = Math.max(w, ctx.measureText(sub).width); }
+  w += 36;
+
+  const b = pixelBox(e.x - w / 2, ly - h / 2, w, h, isT ? "#ffd55a" : "#f4e4c1", isT ? "#e8590c" : "#8a6a9a");
+  // little pointer under the box
+  ctx.fillStyle = "#1a1033"; ctx.fillRect(Math.round(e.x / 4) * 4 - 8, b.y + b.h, 16, 4); ctx.fillRect(Math.round(e.x / 4) * 4 - 4, b.y + b.h + 4, 8, 4);
+
+  const cy = b.y + b.h / 2;
+  if (!e.jp) {
+    ctx.font = `30px ${FONT}`; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    const full = ctx.measureText(ans).width;
+    let x = e.x - full / 2;
+    const done = isT ? typed.length : 0;
+    ctx.fillStyle = "#c2410c"; ctx.fillText(ans.slice(0, done), x, cy);
+    x += ctx.measureText(ans.slice(0, done)).width;
+    ctx.fillStyle = "#1a1033"; ctx.fillText(ans.slice(done), x, cy);
+  } else {
+    text(main, e.x, cy - 15, 30, "#1a1033");
+    text(sub, e.x, cy + 18, 26, isT ? "#c2410c" : "#6b5a7a");
+  }
+}
+
+function drawHud() {
+  if (state === "title") return;
+  ctx.imageSmoothingEnabled = false;
+  for (let i = 0; i < 5; i++) ctx.drawImage(i < lives ? HEART : HEART_EMPTY, 24 + i * 40, 20, 7 * 4, 6 * 4);
+  text("SCORE " + score, W - 28, 34, 36, "#f4e4c1", "#1a1033", "right");
+  text("WAVE " + wave, W / 2, 34, 32, "#f4e4c1", "#1a1033");
+  if (combo >= 3) text(combo + " COMBO!", W - 28, 80, 28, "#ffd55a", "#1a1033", "right");
+  if (state !== "play") return;
+  const cursor = Math.floor(clock * 2) % 2 ? "_" : " ";
+  const full = mana >= MANA_MAX && known.length > 0;
+
+  // typing box
+  if (spellMode) {
+    const b = pixelBox(W / 2 - 240, H - 92, 480, 72, "#4a1f7a", "#ffd55a");
+    if (spellTyped) text("✦ " + spellTyped + cursor, W / 2, b.y + b.h / 2, 38, "#ffd55a");
+    else text("✦ type a spell! / 魔法の名前", W / 2, b.y + b.h / 2, 28, "#d8c2ff");
+  } else {
+    const b = pixelBox(W / 2 - 240, H - 92, 480, 72, "#2a1b4f", "#f4e4c1");
+    if (typed) text(typed + cursor, W / 2, b.y + b.h / 2, 38, "#ffd55a");
+    else text("type… / タイプしよう", W / 2, b.y + b.h / 2, 30, "#8a7aaa");
+  }
+
+  // mana bar (left)
+  const mb = pixelBox(20, H - 88, 360, 64, "#1f1540", full ? "#ffd55a" : "#8a6a9a");
+  text("MP", mb.x + 34, mb.y + mb.h / 2, 26, "#c9b6ff");
+  const bx = mb.x + 64, by = mb.y + 20, bw = mb.w - 84, bh = 24;
+  ctx.fillStyle = "#0e0a1f"; ctx.fillRect(bx, by, bw, bh);
+  const fillW = Math.round(bw * mana / MANA_MAX / 4) * 4;
+  ctx.fillStyle = full ? (Math.floor(clock * 6) % 2 ? "#ffd55a" : "#ffb13d") : "#7a5cff"; ctx.fillRect(bx, by, fillW, bh);
+  ctx.fillStyle = "rgba(255,255,255,.35)"; ctx.fillRect(bx, by, fillW, 4);
+  if (full && !spellMode) text("SPACE!", bx + bw / 2, by + bh / 2, 22, "#1a1033");
+  if (!known.length) text("Beat a boss to learn magic!", bx + bw / 2, by + bh / 2, 17, "#8a7aaa");
+
+  // spellbook (right)
+  const sx0 = W - 400, sy0 = H - 96;
+  if (known.length) {
+    known.forEach((s, i) => {
+      const col = i % 3, row = Math.floor(i / 3);
+      const x = sx0 + col * 128, y = sy0 + row * 42;
+      const match = spellMode && spellTyped && s.name.startsWith(spellTyped);
+      const ready = full || spellMode;
+      const b = pixelBox(x, y, 120, 40, match ? "#ffd55a" : ready ? "#4a1f7a" : "#2a1b4f", ready ? s.color : "#5a4a6a", false);
+      text(s.name, b.x + b.w / 2, b.y + b.h / 2, 20, match ? "#1a1033" : ready ? "#ffffff" : "#8a7aaa");
+    });
+  }
+
+  // "new spell learned" popup
+  if (learnTimer > 0 && learnTimer < 2.4 && learned) {
+    const b = pixelBox(W / 2 - 380, 230, 760, 236, "#2a1b4f", learned.color);
+    text("NEW SPELL! / 新しい魔法をおぼえた！", W / 2, b.y + 40, 28, "#f4e4c1");
+    text(learned.name.toUpperCase() + "  (" + learned.jp + ")", W / 2, b.y + 96, 56, learned.color, "#1a1033");
+    text(learned.info, W / 2, b.y + 152, 24, "#d8c2ff");
+    text("MPがたまったら SPACE → " + learned.name, W / 2, b.y + 192, 22, "#ffd55a");
+  }
+}
+
+// ============================================================
+//  LOOP
+// ============================================================
+function loop(now) {
+  const dt = Math.min(0.05, (now - lastTime) / 1000 || 0);
+  lastTime = now;
+  update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// build the tabs + word-list buttons
+const listBtns = document.getElementById("listBtns"), tabs = document.getElementById("tabs");
+const colors = ["b1", "b2", "b3"];
+let currentGroup = "topic";
+try { currentGroup = localStorage.getItem("ww-group") || "topic"; } catch (e) {}
+function showGroup(id) {
+  currentGroup = id;
+  try { localStorage.setItem("ww-group", id); } catch (e) {}
+  tabs.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.dataset.g === id));
+  listBtns.innerHTML = "";
+  if (id === "eiken") { showDecks(); return; }
+  const lists = LISTS.filter(Ls => Ls.group === id);
+  lists.forEach((Ls, i) => {
+    const b = document.createElement("button");
+    b.className = "btn " + colors[i % 3];
+    b.innerHTML = `${Ls.name}<br><small>${Ls.sub}</small>`;
+    b.addEventListener("click", () => startGame(parseList(Ls.words)));
+    listBtns.appendChild(b);
+  });
+  const allBtn = document.createElement("button");
+  allBtn.className = "btn b4";
+  allBtn.innerHTML = "Mix All<br><small>ぜんぶミックス</small>";
+  allBtn.addEventListener("click", () => startGame(lists.flatMap(Ls => parseList(Ls.words))));
+  listBtns.appendChild(allBtn);
+}
+function deckWords(secs) { return secs.flatMap(sec => sec.words.map(([en, jp]) => ({ en, jp }))); }
+function showDecks() {
+  listBtns.innerHTML = "";
+  DECKS.forEach((d, i) => {
+    const b = document.createElement("button");
+    b.className = "btn " + colors[i % 3];
+    b.innerHTML = `${d.title}<br><small>${deckWords(d.sections).length} words ▶</small>`;
+    b.addEventListener("click", () => showSections(d));
+    listBtns.appendChild(b);
+  });
+}
+function showSections(d) {
+  listBtns.innerHTML = "";
+  const top = document.createElement("div");
+  const back = document.createElement("button");
+  back.className = "btn sbtn"; back.style.background = "#5a4a6a"; back.textContent = "◀ Back / もどる";
+  back.addEventListener("click", showDecks);
+  const all = document.createElement("button");
+  all.className = "btn b4"; all.innerHTML = `${d.title} ALL<br><small>ぜんぶ (${deckWords(d.sections).length})</small>`;
+  all.addEventListener("click", () => startGame(deckWords(d.sections)));
+  top.append(back, all); listBtns.appendChild(top);
+  const groups = [...new Set(d.sections.map(s => s.group))];
+  groups.forEach((g, gi) => {
+    const secs = d.sections.filter(s => s.group === g);
+    const h = document.createElement("div"); h.className = "sgroup"; h.textContent = "▼ " + g; listBtns.appendChild(h);
+    const row = document.createElement("div");
+    const gAll = document.createElement("button");
+    gAll.className = "btn sbtn b4"; gAll.textContent = `All (${deckWords(secs).length})`;
+    gAll.addEventListener("click", () => startGame(deckWords(secs)));
+    row.appendChild(gAll);
+    secs.forEach(sec => {
+      const b = document.createElement("button");
+      b.className = "btn sbtn " + colors[gi % 3];
+      b.textContent = sec.title.split(" ・ ").reverse().join(" ・ ").replace(/ ・ .*/, "") + ` (${sec.words.length})`;
+      b.title = sec.title;
+      b.addEventListener("click", () => startGame(deckWords([sec])));
+      row.appendChild(b);
+    });
+    listBtns.appendChild(row);
+  });
+}
+// hero picker
+const heroesDiv = document.getElementById("heroes");
+CHARACTERS.forEach((c, i) => {
+  const b = document.createElement("button");
+  b.className = "hero" + (i === hero ? " on" : "");
+  const cv2 = document.createElement("canvas"); cv2.width = 19; cv2.height = 23;
+  cv2.getContext("2d").drawImage(c.spr, 0, 0);
+  b.appendChild(cv2);
+  b.insertAdjacentHTML("beforeend", `${c.name}<br><small>${c.sub}</small>`);
+  b.addEventListener("click", () => {
+    hero = i; try { localStorage.setItem("ww-hero", i); } catch (e) {}
+    heroesDiv.querySelectorAll(".hero").forEach((h, j) => h.classList.toggle("on", j === i));
+    audioOn(); SFX.spellReady();
+  });
+  heroesDiv.appendChild(b);
+});
+GROUPS.forEach(g => {
+  const t = document.createElement("button");
+  t.className = "tab"; t.dataset.g = g.id; t.textContent = `${g.name} / ${g.sub}`;
+  t.addEventListener("click", () => showGroup(g.id));
+  tabs.appendChild(t);
+});
+showGroup(GROUPS.some(g => g.id === currentGroup) ? currentGroup : "topic");
+
+function goToMenu() {
+  document.getElementById("over").classList.add("hidden");
+  document.getElementById("pause").classList.add("hidden");
+  document.getElementById("title").classList.remove("hidden");
+  topBtns.classList.add("hidden");
+  state = "title"; enemies = []; fireballs = []; target = null; typed = ""; spellMode = false;
+  freezeTimer = 0; bolts = []; meteors = []; tornados = []; learnTimer = 0;
+}
+document.getElementById("againBtn").addEventListener("click", goToMenu);
+document.getElementById("quitBtn").addEventListener("click", goToMenu);
+document.getElementById("menuBtn").addEventListener("click", (ev) => {
+  ev.currentTarget.blur();
+  if (state !== "play") return;
+  state = "paused"; target = null; typed = ""; spellMode = false;
+  document.getElementById("pause").classList.remove("hidden");
+});
+document.getElementById("resumeBtn").addEventListener("click", (ev) => {
+  ev.currentTarget.blur();
+  document.getElementById("pause").classList.add("hidden");
+  state = "play"; lastTime = performance.now();
+});
+</script>
+</body>
+</html>
