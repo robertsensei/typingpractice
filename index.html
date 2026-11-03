@@ -39,6 +39,14 @@
   .btn:active { transform: translateY(4px); box-shadow: inset -4px -4px 0 rgba(0,0,0,.28), inset 4px 4px 0 rgba(255,255,255,.25), 0 2px 0 #1a1033; }
   .b1 { background: #3d6fd9; } .b2 { background: #d9487a; } .b3 { background: #2f9e5a; } .b4 { background: #e07b1f; }
   .hidden, #topBtns.hidden { display: none; }
+#over { background: rgba(14, 10, 31, .86); }
+#missedBox { margin: 0 auto 18px; max-width: min(1000px, 92vw); }
+#missedBox h2 { font-size: clamp(18px, 2.4vw, 26px); color: #ffd55a; margin: 4px 0 10px; }
+#missedList { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-height: 34vh; overflow-y: auto; padding: 4px; }
+.mw { background: #2a1b4f; border: 3px solid #8a6a9a; padding: 6px 12px; font-size: clamp(15px, 1.8vw, 20px); color: #f4e4c1; }
+.mw b { color: #ffffff; font-weight: normal; } .mw span { color: #c9b6ff; margin-left: 8px; }
+.mw.got { border-color: #e84545; }
+.mwKey { font-size: clamp(12px, 1.4vw, 15px); color: #a99bc4; margin-top: 10px; } .mwKey .mw { padding: 1px 6px; font-size: inherit; } .mw small { color: #ff8a8a; margin-left: 6px; }
 #heroSpells { text-align: center; font-size: 15px; margin: 4px 0 2px; color: #d8c2ff; text-shadow: 0 2px 0 #1a1033; }
   #topBtns { position: absolute; left: 1.2%; top: 11%; display: flex; gap: 10px; }
   #topBtns button { font-family: inherit; font-size: clamp(12px, 1.6vw, 18px);
@@ -67,6 +75,11 @@
   <div id="over" class="screen hidden">
     <h1>GAME OVER</h1>
     <p id="finalScore" style="font-size:clamp(20px,3vw,34px)"></p>
+    <div id="missedBox" class="hidden">
+      <h2>Words to review / ふくしゅうしよう</h2>
+      <div id="missedList"></div>
+      <p class="mwKey"><span class="mw got">red</span> = reached the tower / 塔までとどいた　　×2 = typed wrong 2 times / 2回まちがえた</p>
+    </div>
     <button class="btn b3" id="againBtn">Play again / もう一回</button>
   </div>
 
@@ -997,7 +1010,7 @@ function startGame(words) {
   score = 0; lives = 5; wave = 0; combo = 0; shake = 0;
   deck = [];
   towerShake = 0; towerFlash = 0; collapseT = 0;
-  mana = 0; known = [spell("heal")]; spellMode = false; resetSpellFx(); warcryT = 0; spellTyped = ""; freezeTimer = 0; flash = 0;
+  missed = new Map(); mana = 0; known = [spell("heal")]; spellMode = false; resetSpellFx(); warcryT = 0; spellTyped = ""; freezeTimer = 0; flash = 0;
   bolts = []; meteors = []; tornados = []; learned = null; learnTimer = 0;
   state = "play";
   startIntro();
@@ -1723,7 +1736,15 @@ function drawMagic() {
 let imeTimer = 0;
 function showIme() { document.getElementById("imeWarn").classList.remove("hidden"); imeTimer = 2.5; }
 
+// words the student got wrong this game, shown on the game over screen
+let missed = new Map();
+function noteMissed(w, how) {
+  if (!w || !w.en) return;
+  const m = missed.get(w.en) || { en: w.en, jp: w.jp || "", typo: 0, got: 0 };
+  m[how]++; missed.set(w.en, m);
+}
 function miss() {
+  if (target) noteMissed(target.word, "typo");
   combo = 0;
   shake = 0.2;
   if (target) target.hitFlash = 0.15;
@@ -1853,7 +1874,7 @@ function update(dt) {
       if (target === e) { target = null; typed = ""; }
     }
     if (e.x < WALL_X + (e.boss ? 40 : 0) && !e.dead) {
-      e.dead = true;
+      e.dead = true; noteMissed(e.word, "got");
       lives -= e.boss ? BOSS_DAMAGE : 1; shake = e.boss ? 0.7 : 0.4; combo = 0;
       SFX.hurt();
       hitTower(e.y - 30, e.boss);
@@ -1925,6 +1946,12 @@ function endGame() {
   topBtns.classList.add("hidden");
   SFX.crumble();
   document.getElementById("finalScore").textContent = `Score ${score}　Wave ${wave}`;
+  // words that got through or were mistyped — most-missed first
+  const list = [...missed.values()].sort((a, b) => (b.got * 2 + b.typo) - (a.got * 2 + a.typo));
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  document.getElementById("missedList").innerHTML = list.map(m =>
+    `<div class="mw${m.got ? " got" : ""}"><b>${esc(m.en)}</b>${m.jp ? `<span>${esc(m.jp)}</span>` : ""}${m.typo > 1 ? `<small>×${m.typo}</small>` : ""}</div>`).join("");
+  document.getElementById("missedBox").classList.toggle("hidden", list.length === 0);
 }
 function updateCollapse(dt) {
   collapseT += dt;
