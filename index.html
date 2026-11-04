@@ -1341,43 +1341,43 @@ window.addEventListener("keydown", (ev) => {
 //  A new spell is learned after each boss (in this order).
 // ============================================================
 const SPELL_INFO = {
-  heal:    { jp: "かいふく",   color: "#7cf08a", info: "Get 1 heart back / ハートが1つもどる" },
+  heal:    { cost: 40, jp: "かいふく",   color: "#7cf08a", info: "Get 1 heart back / ハートが1つもどる" },
   // Merlin — all-rounder
-  light:   { jp: "ひかり",     color: "#fff3a8", info: "Hit every monster / 全部のモンスターにあたる" },
-  shield:  { jp: "たて",       color: "#7fd8ff", info: "Block the next 2 hits / 2回まもる" },
-  book:    { jp: "ほん",       color: "#f4e4c1", info: "All clues in English for 12 sec / 12秒間ぜんぶ英語" },
-  time:    { jp: "じかん",     color: "#c9b6ff", info: "Stop all monsters for 4 sec / 4秒間とまる" },
-  star:    { jp: "ほし",       color: "#ffe45a", info: "3 hits on the boss / ボスに3回あたる" },
+  light:   { cost: 80, jp: "ひかり",     color: "#fff3a8", info: "Hit the 6 closest + the boss / 近い6体とボスにあたる" },
+  shield:  { cost: 70, jp: "たて",       color: "#7fd8ff", info: "Block 2 hits (lasts until used) / 2回まもる" },
+  book:    { cost: 25, jp: "ほん",       color: "#f4e4c1", info: "All clues in English for 12 sec / 12秒間ぜんぶ英語" },
+  time:    { cost: 60, jp: "じかん",     color: "#c9b6ff", info: "Stop all monsters for 3 sec / 3秒間とまる" },
+  star:    { cost: 100, jp: "ほし",       color: "#ffe45a", info: "3 hits on the boss / ボスに3回あたる" },
   // Ember — fire, pure damage
-  fire:    { jp: "ほのお",     color: "#ff8a3d", info: "Burn the 3 closest monsters / 近い3体をもやす" },
-  wall:    { jp: "ほのおのかべ", color: "#ff5a2e", info: "A wall of fire for 6 sec / 6秒間ほのおのかべ" },
-  burn:    { jp: "もやす",     color: "#ff4a2e", info: "Set every monster on fire / 全部をもやす" },
-  power:   { jp: "パワー",     color: "#ffd55a", info: "Next 5 words: double damage / 次の5語はダメージ2倍" },
-  meteor:  { jp: "いんせき",   color: "#ff8a3d", info: "4 hits on the boss / ボスに4回あたる" },
+  fire:    { cost: 30, jp: "ほのお",     color: "#ff8a3d", info: "Burn the 3 closest monsters / 近い3体をもやす" },
+  wall:    { cost: 55, jp: "ほのおのかべ", color: "#ff5a2e", info: "A wall of fire for 5 sec / 5秒間ほのおのかべ" },
+  burn:    { cost: 80, jp: "もやす",     color: "#ff4a2e", info: "Set the 6 closest on fire / 近い6体をもやす" },
+  power:   { cost: 40, jp: "パワー",     color: "#ffd55a", info: "Next 4 words: x2 on the boss / 次の4語はボスに2倍" },
+  meteor:  { cost: 100, jp: "いんせき",   color: "#ff8a3d", info: "4 hits on the boss / ボスに4回あたる" },
   // Sage — forest, control
-  vine:    { jp: "つる",       color: "#6fdc6a", info: "Trap every monster for 5 sec / 5秒間うごけない" },
-  tree:    { jp: "き",         color: "#4fc06a", info: "A tree blocks 3 hits / 木が3回まもる" },
-  leaf:    { jp: "はっぱ",     color: "#b8f06a", info: "Hit every monster / 全部のモンスターにあたる" },
-  bear:    { jp: "くま",       color: "#e19a65", info: "A bear charges across the field / くまが走ってたおす" },
-  rain:    { jp: "あめ",       color: "#75e3ff", info: "Next 6 words are short / 次の6語は短い" },
+  vine:    { cost: 45, jp: "つる",       color: "#6fdc6a", info: "Trap every monster for 4 sec / 4秒間うごけない" },
+  tree:    { cost: 65, jp: "き",         color: "#4fc06a", info: "A tree blocks 2 hits / 木が2回まもる" },
+  leaf:    { cost: 75, jp: "はっぱ",     color: "#b8f06a", info: "Hit the 6 closest monsters / 近い6体にあたる" },
+  bear:    { cost: 100, jp: "くま",       color: "#e19a65", info: "A bear charges + 2 hits on the boss / くまが走る・ボスに2回" },
+  rain:    { cost: 25, jp: "あめ",       color: "#75e3ff", info: "Next 6 words are short / 次の6語は短い" },
   // Luna — moon, tricks
-  moon:    { jp: "つき",       color: "#fff3c8", info: "Slow all monsters for 6 sec / 6秒間おそくなる" },
-  dream:   { jp: "ゆめ",       color: "#d176d0", info: "Monsters fall asleep / モンスターがねむる" },
-  mirror:  { jp: "かがみ",     color: "#c0cbdc", info: "Reflect the boss's next move / ボスの技をはねかえす" },
-  night:   { jp: "よる",       color: "#8a7aff", info: "Monsters walk backwards / モンスターが後ろに歩く" },
-  stars:   { jp: "ながれぼし", color: "#ffe45a", info: "Shooting stars for 5 sec / 5秒間ながれぼし" },
+  moon:    { cost: 30, jp: "つき",       color: "#fff3c8", info: "Slow all monsters for 5 sec / 5秒間おそくなる" },
+  dream:   { cost: 70, jp: "ゆめ",       color: "#d176d0", info: "Monsters sleep 8 sec (boss 2) / 8秒間ねむる" },
+  mirror:  { cost: 45, jp: "かがみ",     color: "#c0cbdc", info: "Reflect the boss's next move / ボスの技をはねかえす" },
+  night:   { cost: 55, jp: "よる",       color: "#8a7aff", info: "Monsters walk backwards 3 sec / 3秒間後ろに歩く" },
+  stars:   { cost: 100, jp: "ながれぼし", color: "#ffe45a", info: "Shooting stars for 5 sec / 5秒間ながれぼし" },
   // Frost — ice
-  ice:     { jp: "こおり",     color: "#9fe8ff", info: "Shatter the 2 closest monsters / 近い2体をわる" },
-  snow:    { jp: "ゆき",       color: "#e8f8ff", info: "Slow everything for 8 sec / 8秒間おそくなる" },
-  freeze:  { jp: "こおらせる", color: "#7fd8ff", info: "Freeze all 4 sec, boss takes x2 / 全部こおる・ボス2倍" },
-  icewall: { name: "wall", jp: "こおりのかべ", color: "#c9f0ff", info: "An ice wall stops monsters / こおりのかべで止める" },
-  storm:   { jp: "ふぶき",     color: "#ffffff", info: "Hit every monster twice / 全部に2回あたる" },
+  ice:     { cost: 30, jp: "こおり",     color: "#9fe8ff", info: "Freeze the 3 closest / 近い3体をこおらせる" },
+  snow:    { cost: 40, jp: "ゆき",       color: "#e8f8ff", info: "Slow everything for 6 sec / 6秒間おそくなる" },
+  freeze:  { cost: 70, jp: "こおらせる", color: "#7fd8ff", info: "Freeze everything 4 sec, boss x2 / 全部こおる・ボス2倍" },
+  icewall: { cost: 55, name: "wall", jp: "こおりのかべ", color: "#c9f0ff", info: "An ice wall for 6 sec / 6秒間こおりのかべ" },
+  storm:   { cost: 100, jp: "ふぶき",     color: "#ffffff", info: "Hit every monster twice / 全部に2回あたる" },
   // Rose — flowers, support
-  love:    { jp: "こい",       color: "#ff8fb1", info: "3 monsters fall in love and leave / 3体が恋をして帰る" },
-  bloom:   { jp: "はなばたけ", color: "#ffb3d1", info: "Flowers slow monsters for 10 sec / 10秒間花でおそくなる" },
-  bee:     { jp: "はち",       color: "#fee761", info: "Bees sting the 3 closest / ハチが近い3体をさす" },
-  petal:   { jp: "はなびら",   color: "#ff8fb1", info: "Hit all once, the boss twice / 全部に1回・ボスに2回" },
-  rainbow: { jp: "にじ",       color: "#c9b6ff", info: "Fill your MP again / MPがまた満タンになる" },
+  love:    { cost: 50, jp: "こい",       color: "#ff8fb1", info: "3 monsters fall in love and leave / 3体が恋をして帰る" },
+  bloom:   { cost: 35, jp: "はなばたけ", color: "#ffb3d1", info: "Flowers slow monsters for 10 sec / 10秒間花でおそくなる" },
+  bee:     { cost: 25, jp: "はち",       color: "#fee761", info: "Bees sting the 3 closest / ハチが近い3体をさす" },
+  petal:   { cost: 100, jp: "はなびら",   color: "#ff8fb1", info: "Hit all once, the boss twice / 全部に1回・ボスに2回" },
+  rainbow: { cost: 60, jp: "にじ",       color: "#c9b6ff", info: "All spells half price 8 sec / 8秒間まほうが半額" },
 };
 // every hero starts with HEAL, then learns their own 5 spells after bosses 1, 3, 5, 7 and 9
 const HERO_SPELLS = {
@@ -1391,15 +1391,17 @@ const HERO_SPELLS = {
 function spell(id) { return Object.assign({ id, name: id }, SPELL_INFO[id]); }   // name = what you type (Frost's icewall is typed "wall")
 function heroSpells() { return HERO_SPELLS[CHARACTERS[hero].name] || HERO_SPELLS.Merlin; }
 const MANA_MAX = 100;
-function manaFor(len) { return 10 + len * 2; }     // a 5-letter word gives 20 mana
+function manaFor(len) { return 6 + len; }          // a 5-letter word gives 11 MP — about 9 words fill the bar
 
 let mana = 0, known = [], spellMode = false, spellTyped = "";
-let towerShield = 0, timeStop = 0, bookT = 0;
+let towerShield = 0, timeStop = 0, bookT = 0, rainbowT = 0;
+function costOf(sp) { return Math.ceil(sp.cost * (rainbowT > 0 ? 0.5 : 1)); }   // Rose's RAINBOW halves every cost
+function canAfford(sp) { return mana >= costOf(sp); }
 let fireWallT = 0, powerN = 0, treeHP = 0, rainN = 0, rainT = 0, bears = [], moonT = 0, mirrorOn = false, nightT = 0,
     starsT = 0, starTick = 0, iceLockT = 0, iceWallT = 0, iceWallPush = 0, bloomT = 0, inRain = false;
 const FW_X = WALL_X + 150, TREE_X = WALL_X + 100, IW_X = WALL_X + 110, BLOOM_X1 = WALL_X + 520;
 function resetSpellFx() {
-  towerShield = 0; timeStop = 0; bookT = 0; fireWallT = 0; powerN = 0; treeHP = 0; rainN = 0; rainT = 0; bears = [];
+  towerShield = 0; timeStop = 0; bookT = 0; rainbowT = 0; fireWallT = 0; powerN = 0; treeHP = 0; rainN = 0; rainT = 0; bears = [];
   moonT = 0; mirrorOn = false; nightT = 0; starsT = 0; iceLockT = 0; iceWallT = 0; iceWallPush = 0; bloomT = 0;
 }
 let freezeTimer = 0, bolts = [], meteors = [], tornados = [], learned = null, learnTimer = 0;
@@ -1409,7 +1411,7 @@ function gainMana(len) { if (known.length) mana = Math.min(MANA_MAX, mana + mana
 function toggleSpellMode() {
   if (spellMode) { spellMode = false; spellTyped = ""; return; }
   if (!known.length) { floaters.push({ x: W / 2, y: H - 140, text: "No spells yet! / まだ魔法がない", life: 1.2, small: true }); SFX.miss(); return; }
-  if (mana < MANA_MAX) { floaters.push({ x: W / 2, y: H - 140, text: "Mana not full! / MPがたりない", life: 1.2, small: true }); SFX.miss(); return; }
+  if (!known.some(canAfford)) { floaters.push({ x: W / 2, y: H - 140, text: "Not enough MP! / MPがたりない", life: 1.2, small: true }); SFX.miss(); return; }
   spellMode = true; spellTyped = ""; target = null; typed = "";
   SFX.spellReady();
 }
@@ -1420,7 +1422,11 @@ function typeSpell(k) {
   spellTyped = next;
   sparkle(ORB.x, ORB.y, 4);
   const s = known.find(s => s.name === spellTyped);
-  if (s) { spellMode = false; spellTyped = ""; mana = 0; castMagic(s); }
+  if (s) {
+    spellMode = false; spellTyped = "";
+    if (!canAfford(s)) { floaters.push({ x: W / 2, y: H - 140, text: `${s.name}: ${costOf(s)} MP needed / MPがたりない`, life: 1.4, small: true }); SFX.miss(); shake = 0.15; return; }
+    mana -= costOf(s); castMagic(s);
+  }
   else SFX.key(spellTyped.length);
 }
 
@@ -1469,12 +1475,14 @@ function learnNextSpell() {
   setTimeout(() => SFX.learn(), 900);
 }
 
+function nearestNB(k) { return alive().filter(e => !e.proj && !e.boss).sort((a, b) => a.x - b.x).slice(0, k); }
 function castMagic(s) {
   shake = 0.3;
   floaters.push({ x: W / 2, y: 340, text: s.name.toUpperCase() + "!", life: 1.2, big: true, color: s.color });
-  if (s.name === "light") {                           // a flash of holy light hits everything once
+  if (s.name === "light") {                           // a flash of holy light: the 6 closest + 1 boss hit
     flash = 0.35; SFX.thunder();
-    for (const e of alive()) { burst(e.x, e.y - 40, ["#ffffff", "#fff3a8", "#ffd55a"], 18); zap(e, 1); }
+    const tg = nearestNB(6), bo = alive().find(e => e.boss); if (bo) tg.push(bo);
+    for (const e of tg) { burst(e.x, e.y - 40, ["#ffffff", "#fff3a8", "#ffd55a"], 18); zap(e, 1); }
     for (let i = 0; i < 40; i++) particles.push({ x: Math.random() * W, y: Math.random() * 500, vx: 0, vy: -30, life: .7, max: .7, c: "#fff3a8", s: 2, g: 0 });
   }
   if (s.name === "shield") {                          // a bubble around the tower blocks the next 2 hits
@@ -1486,7 +1494,7 @@ function castMagic(s) {
     for (const e of alive()) if (e.jp) { e.jp = false; burst(e.x, e.y - 90, ["#f4e4c1", "#ffd55a"], 10); }
   }
   if (s.name === "time") {                            // time stops: monsters, bosses and thrown things freeze
-    timeStop = 4; SFX.freeze(); flash = 0.15;
+    timeStop = 3; SFX.freeze(); flash = 0.15;
   }
   if (s.name === "star") {                            // a falling star: 3 hits on the boss
     const boss = alive().find(e => e.boss);
@@ -1499,36 +1507,36 @@ function castMagic(s) {
   const hitAll = (n, cols, bossN = n) => { for (const e of alive()) { burst(e.x, e.y - 40, cols, 14); zap(e, e.boss ? bossN : n); } };
   // --- Ember ---
   if (s.name === "fire") { SFX.boom(); for (const e of nearest(3)) { playFx(FX.bigExplo, e.x, e.y - 40, 2.5, 16); burst(e.x, e.y - 40, ["#ffd55a", "#ff8a3d", "#ff4a2e"], 24); zap(e, 1); } }
-  if (s.id === "wall") { fireWallT = 6; SFX.boom(); }
-  if (s.name === "burn") { SFX.boom(); for (const e of alive()) e.burnT = 1.2 + Math.random() * 0.8; }
-  if (s.name === "power") { powerN = 5; SFX.spellReady(); burst(ORB.x, ORB.y, ["#ffd55a", "#ff8a3d", "#ffffff"], 40); }
+  if (s.id === "wall") { fireWallT = 5; SFX.boom(); }
+  if (s.name === "burn") { SFX.boom(); for (const e of nearest(6)) e.burnT = 1.2 + Math.random() * 0.8; }
+  if (s.name === "power") { powerN = 4; SFX.spellReady(); burst(ORB.x, ORB.y, ["#ffd55a", "#ff8a3d", "#ffffff"], 40); }
   // --- Sage ---
-  if (s.name === "vine") { SFX.heal(); for (const e of alive()) if (!e.proj) e.rootT = e.boss ? 3 : 5; }
-  if (s.name === "tree") { treeHP = 3; SFX.heal(); dust(TREE_X, 590, 10); }
-  if (s.name === "leaf") { SFX.tornado(); hitAll(1, ["#6fdc6a", "#b8f06a", "#3a9a55"]); }
+  if (s.name === "vine") { SFX.heal(); for (const e of alive()) if (!e.proj) e.rootT = e.boss ? 2 : 4; }
+  if (s.name === "tree") { treeHP = 2; SFX.heal(); dust(TREE_X, 590, 10); }
+  if (s.name === "leaf") { SFX.tornado(); for (const e of nearestNB(6)) { burst(e.x, e.y - 40, ["#6fdc6a", "#b8f06a", "#3a9a55"], 14); zap(e, 1); } }
   if (s.name === "bear") { bears.push({ x: WALL_X - 40, hit: new Set() }); SFX.roar(); }
   if (s.name === "rain") {
     rainN = 6; rainT = 3; SFX.wind();
     for (const e of alive()) if (!e.boss && !e.proj && e.word.en.length > 5) { const w = shortWord(); e.word = w; e.jp = jpRoll(w); }
   }
   // --- Luna ---
-  if (s.name === "moon") { moonT = 6; SFX.freeze(); }
-  if (s.name === "dream") { SFX.learn(); for (const e of alive()) if (!e.proj) e.sleepT = e.boss ? 3 : 12; }
+  if (s.name === "moon") { moonT = 5; SFX.freeze(); }
+  if (s.name === "dream") { SFX.learn(); for (const e of alive()) if (!e.proj) e.sleepT = e.boss ? 2 : 8; }
   if (s.name === "mirror") {
     mirrorOn = true; SFX.shield();
     for (const e of alive()) if (e.proj) { e.dead = true; burst(e.x, e.y, ["#ffffff", "#c0cbdc", "#d176d0"], 16); }
     floaters.push({ x: W / 2, y: 400, text: "MIRROR READY / かがみ じゅんび", life: 1.6, color: "#c0cbdc" });
   }
-  if (s.name === "night") { nightT = 4; SFX.wind(); }
+  if (s.name === "night") { nightT = 3; SFX.wind(); }
   if (s.name === "stars") { starsT = 5; starTick = 0; }
   // --- Frost ---
-  if (s.name === "ice") {
-    SFX.freeze(); freezeTimer = Math.max(freezeTimer, 3);
-    for (const e of nearest(2)) { burst(e.x, e.y - 40, ["#ffffff", "#9fe8ff", "#5fc8ff"], 30); zap(e, 1); }
+  if (s.name === "ice") {                             // the 3 closest freeze solid
+    SFX.freeze();
+    for (const e of nearest(3)) { burst(e.x, e.y - 40, ["#ffffff", "#9fe8ff", "#5fc8ff"], 20); e.frozenT = e.boss ? 2 : 5; }
   }
-  if (s.name === "snow") { freezeTimer = 8; SFX.freeze(); }
-  if (s.name === "freeze") { iceLockT = 4; SFX.freeze(); for (const e of alive()) burst(e.x, e.y - 30, ["#9fe8ff", "#ffffff", "#5fc8ff"], 12); }
-  if (s.id === "icewall") { iceWallT = 8; iceWallPush = 0; SFX.shield(); burst(IW_X, 560, ["#ffffff", "#9fe8ff"], 30); }
+  if (s.name === "snow") { freezeTimer = 6; SFX.freeze(); }
+  if (s.name === "freeze") { iceLockT = 4; SFX.freeze(); for (const e of alive()) { e.frozenT = 4; burst(e.x, e.y - 30, ["#9fe8ff", "#ffffff", "#5fc8ff"], 12); } }
+  if (s.id === "icewall") { iceWallT = 6; iceWallPush = 0; SFX.shield(); burst(IW_X, 560, ["#ffffff", "#9fe8ff"], 30); }
   if (s.name === "storm") { SFX.wind(); flash = 0.15; hitAll(2, ["#ffffff", "#c9f0ff", "#9fe8ff"]); }
   // --- Rose ---
   if (s.name === "love") {
@@ -1548,8 +1556,9 @@ function castMagic(s) {
     }
   }
   if (s.name === "petal") { SFX.wind(); hitAll(1, ["#ff8fb1", "#ffb3d1", "#ffffff"], 2); }
-  if (s.name === "rainbow") {
-    mana = MANA_MAX; SFX.learn(); score += 50;
+  if (s.name === "rainbow") {                         // every spell costs half for 8 seconds
+    rainbowT = 8; SFX.learn();
+    floaters.push({ x: W / 2, y: 400, text: "HALF PRICE MAGIC! / まほう半額！", life: 1.6, color: "#c9b6ff" });
     const cols = ["#ff4a2e", "#ff8a3d", "#fee761", "#6fdc6a", "#5fc8ff", "#8a7aff", "#d176d0"];
     for (let i = 0; i < 70; i++) { const a = Math.PI + Math.random() * Math.PI; particles.push({ x: W / 2 + Math.cos(a) * 420, y: 560 + Math.sin(a) * 340, vx: 0, vy: 0, life: 1.4, max: 1.4, c: cols[Math.floor((a - Math.PI) / Math.PI * 7)], s: 3, g: 0 }); }
   }
@@ -1594,6 +1603,7 @@ function updateMagic(dt) {
   if (moonT > 0) moonT -= dt;
   if (nightT > 0) nightT -= dt;
   if (iceLockT > 0) iceLockT -= dt;
+  if (rainbowT > 0) rainbowT -= dt;
   if (bloomT > 0) bloomT -= dt;
   if (iceWallT > 0) iceWallT -= dt;
   if (starsT > 0) {                                     // Luna's STARS: a shooting star every 0.35 s
@@ -1608,8 +1618,8 @@ function updateMagic(dt) {
   for (const b of bears) {                              // Sage's BEAR charges across the field
     b.x += 900 * dt;
     if (Math.random() < dt * 30) dust(b.x - 20, 596, 1);
-    for (const e of alive()) if (!e.proj && !b.hit.has(e) && Math.abs(e.x - b.x) < 50) {
-      b.hit.add(e); burst(e.x, e.y - 30, ["#e19a65", "#ffffff"], 14); zap(e, 1); if (e.boss) { e.knock = 220; shake = 0.4; }
+    for (const e of alive()) if (!e.proj && !(e.type && e.type.fly) && !b.hit.has(e) && Math.abs(e.x - b.x) < 50) {
+      b.hit.add(e); burst(e.x, e.y - 30, ["#e19a65", "#ffffff"], 14); zap(e, e.boss ? 2 : 1); if (e.boss) { e.knock = 220; shake = 0.4; }
     }
   }
   bears = bears.filter(b => b.x < W + 120);
@@ -1711,6 +1721,12 @@ function drawMagic() {
   for (const b of bears) lx.drawImage(BEAR, L(b.x) - BEAR.width / 2, gy - BEAR.height + (Math.floor(clock * 12) % 2));
   for (const e of enemies) if (!e.dead) {             // roots and frost on individual monsters
     const ex = L(e.x), ey = L(e.y);
+    if (e.frozenT > 0 && !e.proj) {                     // encased in ice
+      const fr = e.boss ? e.img : e.type.frames[0], w = fr.width + 4, h = fr.height + 2, x0 = ex - (w >> 1), y0 = ey - h;
+      lx.fillStyle = "rgba(160,230,255,.45)"; lx.fillRect(x0, y0, w, h);
+      lx.fillStyle = "rgba(255,255,255,.8)"; lx.fillRect(x0, y0, w, 1); lx.fillRect(x0, y0, 1, h); lx.fillRect(x0 + 2, y0 + 2, 1, Math.min(6, h - 3));
+      lx.fillStyle = "rgba(95,200,255,.9)"; lx.fillRect(x0 + w - 1, y0, 1, h); lx.fillRect(x0, y0 + h - 1, w, 1);
+    }
     if (e.rootT > 0 && !e.proj) { lx.fillStyle = "#3a9a55"; for (let k = -6; k <= 6; k += 3) { lx.fillRect(ex + k, ey - 4 - (k & 3), 1, 4 + (k & 3)); } lx.fillStyle = "#6fdc6a"; lx.fillRect(ex - 6, ey - 2, 13, 1); }
   }
   if (freezeTimer > 0) { lx.fillStyle = `rgba(140,210,255,${Math.min(.22, freezeTimer * .1)})`; lx.fillRect(0, 0, LW, LH); }
@@ -1763,7 +1779,7 @@ function castSpell(e) {
   }
   let dmg = 1;
   if (powerN > 0) { powerN--; if (e.boss) dmg = 2; }          // Ember's POWER
-  if (e.boss && iceLockT > 0) dmg = 2;                         // Frost's FREEZE: frozen bosses take double
+  if (e.boss && e.frozenT > 0) dmg = 2;                        // Frost: frozen bosses take double
   if (e.boss) {
     e.pending -= dmg;
     final = e.pending <= 0;
@@ -1822,9 +1838,10 @@ function update(dt) {
   const slow = timeStop > 0 ? 0 : freezeTimer > 0 ? 0.2 : 1;
   for (const e of enemies) {
     if (e.rootT > 0) e.rootT -= dt;
+    if (e.frozenT > 0) e.frozenT -= dt;
     if (e.sleepT > 0) { e.sleepT -= dt; if (Math.random() < dt * 2) floaters.push({ x: e.x + 20, y: e.y - (e.boss ? 260 : 80), text: "z", life: 1, color: "#d8c2ff" }); }
     let sl = slow;                                      // this monster's own speed factor
-    if (e.rootT > 0 || e.sleepT > 0 || iceLockT > 0) sl = 0;
+    if (e.rootT > 0 || e.sleepT > 0 || e.frozenT > 0) sl = 0;
     if (moonT > 0) sl *= 0.35;
     if (bloomT > 0 && !e.proj && !(e.type && e.type.fly) && e.x < BLOOM_X1) sl *= 0.4;
     e.t += dt * sl;
@@ -2264,7 +2281,7 @@ function drawHud() {
   if (combo >= 3) text(combo + " COMBO!", W - 28, 80, 28, "#ffd55a", "#1a1033", "right");
   if (state !== "play") return;
   const cursor = Math.floor(clock * 2) % 2 ? "_" : " ";
-  const full = mana >= MANA_MAX && known.length > 0;
+  const full = known.some(canAfford);
 
   // typing box
   if (spellMode) {
@@ -2283,9 +2300,10 @@ function drawHud() {
   const bx = mb.x + 64, by = mb.y + 20, bw = mb.w - 84, bh = 24;
   ctx.fillStyle = "#0e0a1f"; ctx.fillRect(bx, by, bw, bh);
   const fillW = Math.round(bw * mana / MANA_MAX / 4) * 4;
-  ctx.fillStyle = full ? (Math.floor(clock * 6) % 2 ? "#ffd55a" : "#ffb13d") : "#7a5cff"; ctx.fillRect(bx, by, fillW, bh);
+  ctx.fillStyle = mana >= MANA_MAX ? (Math.floor(clock * 6) % 2 ? "#ffd55a" : "#ffb13d") : rainbowT > 0 ? "#d176d0" : "#7a5cff"; ctx.fillRect(bx, by, fillW, bh);
+  for (const sp of known) { const tx = bx + Math.round(bw * Math.min(1, costOf(sp) / MANA_MAX)) - 2; ctx.fillStyle = "rgba(255,255,255,.35)"; ctx.fillRect(tx, by - 4, 2, bh + 8); }   // cost marks
   ctx.fillStyle = "rgba(255,255,255,.35)"; ctx.fillRect(bx, by, fillW, 4);
-  if (full && !spellMode) text("SPACE!", bx + bw / 2, by + bh / 2, 22, "#1a1033");
+  text(Math.floor(mana) + (full && !spellMode ? "  SPACE!" : ""), bx + bw / 2, by + bh / 2, 20, full ? "#ffd55a" : "#ffffff", "#1a1033");
   if (!known.length) text("Beat a boss to learn magic!", bx + bw / 2, by + bh / 2, 17, "#8a7aaa");
 
   // spellbook (right)
@@ -2295,9 +2313,10 @@ function drawHud() {
       const col = i % 3, row = Math.floor(i / 3);
       const x = sx0 + col * 128, y = sy0 + row * 42;
       const match = spellMode && spellTyped && s.name.startsWith(spellTyped);
-      const ready = full || spellMode;
+      const ready = canAfford(s);
       const b = pixelBox(x, y, 120, 40, match ? "#ffd55a" : ready ? "#4a1f7a" : "#2a1b4f", ready ? s.color : "#5a4a6a", false);
-      text(s.name, b.x + b.w / 2, b.y + b.h / 2, 20, match ? "#1a1033" : ready ? "#ffffff" : "#8a7aaa");
+      text(s.name, b.x + 46, b.y + b.h / 2, 19, match ? "#1a1033" : ready ? "#ffffff" : "#8a7aaa");
+      text(String(costOf(s)), b.x + b.w - 20, b.y + b.h / 2, 14, match ? "#1a1033" : ready ? (rainbowT > 0 ? "#ff8fb1" : "#ffd55a") : "#6a5a7a");
     });
   }
 
@@ -2307,7 +2326,7 @@ function drawHud() {
     text("NEW SPELL! / 新しい魔法をおぼえた！", W / 2, b.y + 40, 28, "#f4e4c1");
     text(learned.name.toUpperCase() + "  (" + learned.jp + ")", W / 2, b.y + 96, 56, learned.color, "#1a1033");
     text(learned.info, W / 2, b.y + 152, 24, "#d8c2ff");
-    text("MPがたまったら SPACE → " + learned.name, W / 2, b.y + 192, 22, "#ffd55a");
+    text(`${learned.cost} MP:  SPACE → ${learned.name}`, W / 2, b.y + 192, 22, "#ffd55a");
   }
 }
 
@@ -2411,7 +2430,7 @@ const heroSpellsDiv = document.createElement("div");
 heroSpellsDiv.id = "heroSpells";
 heroesDiv.insertAdjacentElement("afterend", heroSpellsDiv);
 function showHeroSpells() {
-  heroSpellsDiv.innerHTML = "✦ " + ["heal", ...heroSpells()].map(id => { const sp = spell(id); return `<span style="color:${sp.color}" title="${sp.info}">${sp.name}</span>`; }).join(" · ");
+  heroSpellsDiv.innerHTML = "✦ " + ["heal", ...heroSpells()].map(id => { const sp = spell(id); return `<span style="color:${sp.color}" title="${sp.info}">${sp.name}<sup style="color:#a99bc4;font-size:11px"> ${sp.cost}</sup></span>`; }).join(" · ");
 }
 showHeroSpells();
 function paintHeroButtons() {
