@@ -47,6 +47,7 @@
 .mw b { color: #ffffff; font-weight: normal; } .mw span { color: #c9b6ff; margin-left: 8px; }
 .mw.got { border-color: #e84545; }
 .mwKey { font-size: clamp(12px, 1.4vw, 15px); color: #a99bc4; margin-top: 10px; } .mwKey .mw { padding: 1px 6px; font-size: inherit; } .mw small { color: #ff8a8a; margin-left: 6px; }
+#modeRow { text-align: center; margin: 6px 0 4px; } #modeRow .modeLbl { color: #ffd55a; font-size: clamp(14px, 2vw, 20px); margin-right: 6px; } #modeRow small { font-size: .7em; }
 #heroSpells { text-align: center; font-size: 15px; margin: 4px 0 2px; color: #d8c2ff; text-shadow: 0 2px 0 #1a1033; }
   #topBtns { position: absolute; left: 1.2%; top: 11%; display: flex; gap: 10px; }
   #topBtns button { font-family: inherit; font-size: clamp(12px, 1.6vw, 18px);
@@ -1044,7 +1045,10 @@ function nextWave() {
 
 // ---- BOSS SETTINGS ----
 // how many words it takes to beat the boss on each wave
-function jpRoll(w) { return !!w.jp && bookT <= 0 && Math.random() < JP_CHANCE; }   // Merlin's BOOK turns clues English
+// EASY mode (for elementary students): every word shows its English, with the Japanese written above it
+let easyMode = false;
+try { easyMode = localStorage.getItem("ww-easy") === "1"; } catch (e) {}
+function jpRoll(w) { return !easyMode && !!w.jp && bookT <= 0 && Math.random() < JP_CHANCE; }   // Merlin's BOOK turns clues English
 function bossHp(w) { return 3 + Math.floor((w - 1) / 2); }   // wave1-2: 3, wave3-4: 4, ...
 const BOSS_DAMAGE = 2;         // hearts lost if the boss reaches the village
 let bossState = "done", bossTimer = 0, bannerText = "";
@@ -2213,7 +2217,8 @@ function drawLabel(e) {
   const isT = e === target;
   const ans = e.word.en;
   const fr = e.boss ? e.img : e.type.frames[0];
-  const h = e.jp ? 84 : 52;
+  const easyJp = easyMode && !e.jp && e.word.jp && e.word.jp !== ans ? e.word.jp : null;   // EASY: Japanese hint above the English
+  const h = e.jp || easyJp ? 84 : 52;
   const ly = e.proj ? e.y - 70 : e.y - fr.height * PX - (e.boss ? 44 : 16) - h / 2;
   if (e.boss) {           // HP bar: one block per word left
     const bw = 28, gap = 6, total = e.maxHp * (bw + gap) - gap;
@@ -2249,6 +2254,7 @@ function drawLabel(e) {
   const sub = e.jp ? ans.split("").map((c, i) => c === " " ? " " : (isT && i < typed.length) ? c : "_").join(" ") : null;
   let w = ctx.measureText(main).width;
   if (sub) { ctx.font = `26px ${FONT}`; w = Math.max(w, ctx.measureText(sub).width); }
+  if (easyJp) { ctx.font = `22px ${FONT}`; w = Math.max(w, ctx.measureText(easyJp).width); }
   w += 36;
 
   const fill = isT ? "#ffd55a" : cursed ? "#e6d4ff" : e.shield ? "#c0cbdc" : e.proj ? (e.look === "ice" ? "#d6f2ff" : e.look === "soul" ? "#dcffc8" : e.look === "rock" ? "#dcd8ea" : "#ffd0a8") : e.blizzard > 0 ? "#e2f4ff" : "#f4e4c1";
@@ -2259,13 +2265,15 @@ function drawLabel(e) {
 
   const cy = b.y + b.h / 2;
   if (!e.jp) {
+    let ey = cy;
+    if (easyJp) { text(easyJp, e.x, cy - 17, 22, "#6b5a7a"); ey = cy + 14; }
     ctx.font = `30px ${FONT}`; ctx.textAlign = "left"; ctx.textBaseline = "middle";
     const full = ctx.measureText(shown).width;
     let x = e.x - full / 2;
     const done = isT ? typed.length : 0;
-    ctx.fillStyle = "#c2410c"; ctx.fillText(ans.slice(0, done), x, cy);
+    ctx.fillStyle = "#c2410c"; ctx.fillText(ans.slice(0, done), x, ey);
     x += ctx.measureText(ans.slice(0, done)).width;
-    ctx.fillStyle = "#1a1033"; ctx.fillText(shown.slice(done), x, cy);
+    ctx.fillStyle = "#1a1033"; ctx.fillText(shown.slice(done), x, ey);
   } else {
     text(main, e.x, cy - 15, 30, "#1a1033");
     text(sub, e.x, cy + 18, 26, isT ? "#c2410c" : "#6b5a7a");
@@ -2433,6 +2441,19 @@ function showHeroSpells() {
   heroSpellsDiv.innerHTML = "✦ " + ["heal", ...heroSpells()].map(id => { const sp = spell(id); return `<span style="color:${sp.color}" title="${sp.info}">${sp.name}<sup style="color:#a99bc4;font-size:11px"> ${sp.cost}</sup></span>`; }).join(" · ");
 }
 showHeroSpells();
+// difficulty: Normal (English or Japanese clues) / Easy (English with Japanese above it)
+const modeDiv = document.createElement("div");
+modeDiv.id = "modeRow";
+modeDiv.innerHTML = `<span class="modeLbl">Mode / モード：</span>
+  <button class="tab" data-m="0">Normal / ふつう</button>
+  <button class="tab" data-m="1">Easy / かんたん <small>(英語 + 日本語)</small></button>`;
+heroSpellsDiv.insertAdjacentElement("afterend", modeDiv);
+function showMode() { modeDiv.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", (t.dataset.m === "1") === easyMode)); }
+modeDiv.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  easyMode = t.dataset.m === "1"; try { localStorage.setItem("ww-easy", easyMode ? "1" : "0"); } catch (e) {}
+  showMode(); audioOn(); SFX.key(3);
+}));
+showMode();
 function paintHeroButtons() {
   CHARACTERS.forEach(c => {
     if (!c.art || !c.button) return;
