@@ -48,6 +48,19 @@
 .mw b { color: #ffffff; font-weight: normal; } .mw span { color: #c9b6ff; margin-left: 8px; }
 .mw.got { border-color: #e84545; }
 .mwKey { font-size: clamp(12px, 1.4vw, 15px); color: #a99bc4; margin-top: 10px; } .mwKey .mw { padding: 1px 6px; font-size: inherit; } .mw small { color: #ff8a8a; margin-left: 6px; }
+.stepT { color: #ffd55a; margin: 0 0 8px; font-size: clamp(16px, 2.3vw, 26px); }
+.stepT b { display: inline-block; background: #ffd55a; color: #1a1033; padding: 0 10px; margin-right: 8px; font-weight: normal; }
+.stepNav { margin-top: 8px; } .stepNav .back { background: #5a4a6a; color: #f4e4c1; }
+#heroes .hero { transform: scale(1.12); margin: 8px 10px; }
+#levels { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; margin: 6px 0 4px; }
+.lvl { font-family: inherit; cursor: pointer; width: min(420px, 42vw); padding: 14px 16px; background: #2a1b4f; color: #f4e4c1;
+  border: 4px solid #8a6a9a; display: flex; flex-direction: column; align-items: center; gap: 10px; box-shadow: 0 6px 0 #1a1033; }
+.lvl:hover, .lvl.on { border-color: #ffd55a; background: #3a2766; }
+.lvlT { font-size: clamp(22px, 3vw, 34px); color: #ffd55a; }
+.lvlD { font-size: clamp(13px, 1.6vw, 18px); line-height: 1.4; } .lvlD small { color: #a99bc4; }
+.lvlEx { background: #f4e4c1; color: #1a1033; border: 4px solid #8a6a9a; padding: 6px 18px; font-size: clamp(18px, 2.4vw, 28px); display: flex; flex-direction: column; align-items: center; line-height: 1.2; }
+.lvlEx small { font-size: .7em; color: #6b5a7a; }
+#quickPlay .btn { margin-top: 10px; }
 #modeRow { text-align: center; margin: 6px 0 4px; } #modeRow .modeLbl { color: #ffd55a; font-size: clamp(14px, 2vw, 20px); margin-right: 6px; } #modeRow small { font-size: .7em; }
 #heroSpells { text-align: center; font-size: 15px; margin: 4px 0 2px; color: #d8c2ff; text-shadow: 0 2px 0 #1a1033; }
   #topBtns { position: absolute; left: 1.2%; top: 11%; display: flex; gap: 10px; }
@@ -66,11 +79,34 @@
     <p>Type the words to cast spells and protect the village!</p>
     <p>単語をタイプして魔法をうち、村を守ろう！</p>
     <div class="panel">
-      <p style="color:#ffd55a;margin:0 0 6px">▶ Choose your hero / キャラをえらぼう</p>
-      <div id="heroes"></div>
-      <p style="color:#ffd55a;margin:10px 0 6px">▶ Choose a word list / 単語リストをえらぼう</p>
-      <div id="tabs"></div>
-      <div id="listBtns"></div>
+      <div id="step1">
+        <p class="stepT"><b>1</b> Choose your hero / キャラをえらぼう</p>
+        <div id="heroes"></div>
+        <div class="stepNav"><button class="btn b3" id="next1">Next ▶ / つぎへ</button></div>
+        <div id="quickPlay"></div>
+      </div>
+      <div id="step2" class="hidden">
+        <p class="stepT"><b>2</b> Choose your level / レベルをえらぼう</p>
+        <div id="levels">
+          <button class="lvl" data-m="1">
+            <span class="lvlT">Easy / かんたん</span>
+            <span class="lvlD">英語のつづりがいつも見える<br><small>The spelling is always shown</small></span>
+            <span class="lvlEx"><small>うれしい</small>happy</span>
+          </button>
+          <button class="lvl" data-m="0">
+            <span class="lvlT">Normal / ふつう</span>
+            <span class="lvlD">日本語だけの時もある。つづりを思い出そう！<br><small>Sometimes only Japanese — remember the spelling!</small></span>
+            <span class="lvlEx">うれしい<small>_ _ _ _ _</small></span>
+          </button>
+        </div>
+        <div class="stepNav"><button class="btn sbtn back" data-to="1">◀ Back / もどる</button></div>
+      </div>
+      <div id="step3" class="hidden">
+        <p class="stepT"><b>3</b> Choose your words / 単語をえらぼう</p>
+        <div id="tabs"></div>
+        <div id="listBtns"></div>
+        <div class="stepNav"><button class="btn sbtn back" data-to="2">◀ Back / もどる</button></div>
+      </div>
     </div>
   </div>
 
@@ -144,15 +180,15 @@ const LISTS = [
 
   // ---------- SCHOOL YEAR / 学年 ----------
   { group: "grade", name: "小学3・4年", sub: "Elementary 3-4", words:
-    "hello=こんにちは, goodbye=さようなら, yes=はい, no=いいえ, one=1, two=2, three=3, four=4, five=5, six=6, seven=7, eight=8, nine=9, ten=10, eleven=11, twelve=12, thirteen=13, fourteen=14, fifteen=15, sixteen=16, seventeen=17, eighteen=18, nineteen=19, twenty=20, red=赤, blue=青, yellow=黄色, green=緑, pink=ピンク, purple=むらさき, black=黒, white=白, brown=茶色, orange=オレンジ, apple=りんご, banana=バナナ, melon=メロン, grapes=ぶどう, peach=もも, strawberry=いちご, lemon=レモン, cherry=さくらんぼ, dog=犬, cat=ねこ, bear=くま, pig=ぶた, rabbit=うさぎ, panda=パンダ, lion=ライオン, monkey=さる, elephant=ぞう, bird=鳥, fish=魚, head=頭, face=顔, hair=かみの毛, eye=目, ear=耳, nose=鼻, mouth=口, hand=手, foot=足, hat=ぼうし, ball=ボール, pen=ペン, pencil=えんぴつ, eraser=消しゴム, ruler=じょうぎ, book=本, bag=かばん, desk=つくえ, star=星, heart=ハート, circle=丸, square=四角, triangle=三角, sunny=晴れの, rainy=雨の, cloudy=くもりの, snowy=雪の, hot=暑い, cold=寒い, Monday=月曜日, Tuesday=火曜日, Wednesday=水曜日, Thursday=木曜日, Friday=金曜日, Saturday=土曜日, Sunday=日曜日, happy=うれしい, sad=悲しい, hungry=おなかがすいた, sleepy=ねむい, tired=つかれた, fine=元気な, cake=ケーキ, juice=ジュース, milk=牛乳, pizza=ピザ, rice=ごはん" },
+    "hello=こんにちは, goodbye=さようなら, yes=はい, no=いいえ, one=1, two=2, three=3, four=4, five=5, six=6, seven=7, eight=8, nine=9, ten=10, eleven=11, twelve=12, thirteen=13, fourteen=14, fifteen=15, sixteen=16, seventeen=17, eighteen=18, nineteen=19, twenty=20, red=赤, blue=青, yellow=黄色, green=緑, pink=ピンク, purple=むらさき, black=黒, white=白, brown=茶色, orange=オレンジ, apple=りんご, banana=バナナ, melon=メロン, grapes=ぶどう, peach=もも, strawberry=いちご, lemon=レモン, cherry=さくらんぼ, dog=犬, cat=ねこ, bear=くま, pig=ぶた, rabbit=うさぎ, panda=パンダ, lion=ライオン, monkey=さる, elephant=ぞう, bird=鳥, fish=魚, head=頭, face=顔, hair=かみの毛, eye=目, ear=耳, nose=鼻, mouth=口, hand=手, foot=足, hat=ぼうし, ball=ボール, pen=ペン, pencil=えんぴつ, eraser=消しゴム, ruler=じょうぎ, book=本, bag=かばん, desk=つくえ, star=星, heart=ハート, circle=丸, square=四角, triangle=三角, sunny=晴れの, rainy=雨の, cloudy=くもりの, snowy=雪の, hot=暑い, cold=寒い, Monday=月曜日, Tuesday=火曜日, Wednesday=水曜日, Thursday=木曜日, Friday=金曜日, Saturday=土曜日, Sunday=日曜日, happy=うれしい, sad=悲しい, hungry=おなかがすいた, sleepy=ねむい, tired=つかれた, fine=元気な, cake=ケーキ, juice=ジュース, milk=牛乳, pizza=ピザ, rice=ごはん, tomato=トマト, potato=じゃがいも, carrot=にんじん, onion=たまねぎ, cabbage=キャベツ, corn=とうもろこし, cucumber=きゅうり, kiwi=キウイ, pineapple=パイナップル, watermelon=スイカ, egg=たまご, bread=パン, cookie=クッキー, candy=あめ, donut=ドーナツ, pudding=プリン, chocolate=チョコレート, jam=ジャム, horse=馬, cow=牛, sheep=ひつじ, mouse=ねずみ, tiger=トラ, koala=コアラ, frog=カエル, snake=ヘビ, ant=アリ, bee=ハチ, butterfly=チョウ, spider=クモ, owl=フクロウ, penguin=ペンギン, arm=うで, leg=脚, finger=指, shoulder=かた, knee=ひざ, toe=足の指, notebook=ノート, crayon=クレヨン, glue=のり, scissors=はさみ, marker=マーカー, stapler=ホチキス, calendar=カレンダー, clock=時計, cap=キャップ, shirt=シャツ, pants=ズボン, shoes=くつ, socks=くつ下, gloves=手ぶくろ, sweater=セーター, diamond=ひし形, rectangle=長方形, windy=風の強い, play=遊ぶ, jump=跳ぶ, run=走る, swim=泳ぐ, sing=歌う, dance=おどる, cook=料理する, walk=歩く, sleep=ねる, angry=おこった, great=最高の, good=よい, thirsty=のどがかわいた, morning=朝, afternoon=午後, night=夜, car=車, bus=バス, train=電車, bike=自転車, ship=船, airplane=飛行機, robot=ロボット, doll=人形, kite=たこ, puzzle=パズル, game=ゲーム, card=カード, cup=コップ, chair=いす, door=ドア, window=窓, bed=ベッド, alphabet=アルファベット" },
   { group: "grade", name: "小学5・6年", sub: "Elementary 5-6", words:
-    "math=算数, science=理科, music=音楽, English=英語, Japanese=国語, arts and crafts=図工, doctor=医者, teacher=先生, pilot=パイロット, farmer=農家, nurse=看護師, singer=歌手, baker=パン屋さん, florist=花屋さん, vet=獣医, astronaut=宇宙飛行士, park=公園, station=駅, hospital=病院, library=図書館, school=学校, zoo=動物園, bank=銀行, restaurant=レストラン, museum=博物館, aquarium=水族館, temple=寺, castle=城, soccer=サッカー, baseball=野球, basketball=バスケットボール, volleyball=バレーボール, tennis=テニス, badminton=バドミントン, swim=泳ぐ, jump=跳ぶ, skate=スケートをする, cook=料理する, sing=歌う, dance=おどる, play=する・遊ぶ, run=走る, walk=歩く, read=読む, write=書く, ride=乗る, fly=飛ぶ, want=ほしい, can=できる, breakfast=朝ごはん, lunch=昼ごはん, dinner=晩ごはん, curry=カレー, sushi=すし, hamburger=ハンバーガー, spaghetti=スパゲッティ, steak=ステーキ, omelet=オムレツ, soup=スープ, spring=春, summer=夏, fall=秋, winter=冬, January=1月, February=2月, March=3月, April=4月, May=5月, June=6月, July=7月, August=8月, September=9月, October=10月, November=11月, December=12月, birthday=誕生日, festival=祭り, Japan=日本, America=アメリカ, China=中国, Korea=韓国, France=フランス, Italy=イタリア, India=インド, Australia=オーストラリア, Brazil=ブラジル, Canada=カナダ, Egypt=エジプト, big=大きい, small=小さい, happy=うれしい, sad=悲しい, delicious=おいしい, cute=かわいい, cool=かっこいい, beautiful=美しい, exciting=わくわくする, fun=楽しい, wonderful=すばらしい, famous=有名な, went=行った, ate=食べた, saw=見た, enjoyed=楽しんだ, memory=思い出, dream=夢, future=将来, trip=旅行, hero=ヒーロー" },
+    "math=算数, science=理科, music=音楽, English=英語, Japanese=国語, arts and crafts=図工, doctor=医者, teacher=先生, pilot=パイロット, farmer=農家, nurse=看護師, singer=歌手, baker=パン屋さん, florist=花屋さん, vet=獣医, astronaut=宇宙飛行士, park=公園, station=駅, hospital=病院, library=図書館, school=学校, zoo=動物園, bank=銀行, restaurant=レストラン, museum=博物館, aquarium=水族館, temple=寺, castle=城, soccer=サッカー, baseball=野球, basketball=バスケットボール, volleyball=バレーボール, tennis=テニス, badminton=バドミントン, swim=泳ぐ, jump=跳ぶ, skate=スケートをする, cook=料理する, sing=歌う, dance=おどる, play=する・遊ぶ, run=走る, walk=歩く, read=読む, write=書く, ride=乗る, fly=飛ぶ, want=ほしい, can=できる, breakfast=朝ごはん, lunch=昼ごはん, dinner=晩ごはん, curry=カレー, sushi=すし, hamburger=ハンバーガー, spaghetti=スパゲッティ, steak=ステーキ, omelet=オムレツ, soup=スープ, spring=春, summer=夏, fall=秋, winter=冬, January=1月, February=2月, March=3月, April=4月, May=5月, June=6月, July=7月, August=8月, September=9月, October=10月, November=11月, December=12月, birthday=誕生日, festival=祭り, Japan=日本, America=アメリカ, China=中国, Korea=韓国, France=フランス, Italy=イタリア, India=インド, Australia=オーストラリア, Brazil=ブラジル, Canada=カナダ, Egypt=エジプト, big=大きい, small=小さい, happy=うれしい, sad=悲しい, delicious=おいしい, cute=かわいい, cool=かっこいい, beautiful=美しい, exciting=わくわくする, fun=楽しい, wonderful=すばらしい, famous=有名な, went=行った, ate=食べた, saw=見た, enjoyed=楽しんだ, memory=思い出, dream=夢, future=将来, trip=旅行, hero=ヒーロー, social studies=社会, calligraphy=書写, firefighter=消防士, police officer=警察官, zookeeper=飼育員, scientist=科学者, actor=俳優, comedian=お笑い芸人, dentist=歯医者, bus driver=バスの運転手, cartoonist=まんが家, soccer player=サッカー選手, shrine=神社, post office=郵便局, supermarket=スーパー, bookstore=本屋, stadium=スタジアム, amusement park=遊園地, swimming pool=プール, convenience store=コンビニ, department store=デパート, police station=警察署, fire station=消防署, flower shop=花屋, bakery=パン屋, gym=体育館, go straight=まっすぐ行く, turn right=右に曲がる, turn left=左に曲がる, right=右, left=左, school trip=修学旅行, sports day=運動会, music festival=音楽会, entrance ceremony=入学式, graduation=卒業, summer vacation=夏休み, field trip=遠足, New Year=新年, rice ball=おにぎり, fried chicken=からあげ, French fries=フライドポテト, pancake=パンケーキ, parfait=パフェ, grilled fish=焼き魚, miso soup=みそ汁, noodles=めん, ramen=ラーメン, udon=うどん, played=した・遊んだ, was=〜だった, visit=訪れる, see=見る, eat=食べる, drink=飲む, buy=買う, study=勉強する, nice=すてきな, great=すばらしい, interesting=おもしろい, tall=背の高い, short=短い, strong=強い, kind=やさしい, brave=勇かんな, friendly=親しみやすい, smart=かしこい, funny=おもしろい, gentle=おだやかな, active=活発な, Kenya=ケニア, Germany=ドイツ, Russia=ロシア, Thailand=タイ, Peru=ペルー, Mexico=メキシコ, sea=海, mountain=山, river=川, lake=湖, beach=浜辺, forest=森" },
   { group: "grade", name: "中学1年", sub: "JHS 1", words:
-    "what=何, where=どこ, when=いつ, who=だれ, how=どのように, which=どちら, why=なぜ, whose=だれの, family=家族, father=父, mother=母, brother=兄・弟, sister=姉・妹, grandmother=祖母, grandfather=祖父, house=家, room=部屋, kitchen=台所, bed=ベッド, door=ドア, window=窓, car=車, bike=自転車, bus=バス, train=電車, phone=電話, computer=コンピューター, picture=写真・絵, letter=手紙, word=単語, sentence=文, name=名前, club=部活, member=メンバー, team=チーム, time=時間, hour=1時間, minute=分, week=週, year=年, hobby=趣味, festival=祭り, city=市, Japan=日本, live=住む, like=好きだ, have=持っている, want=ほしい, know=知っている, speak=話す, practice=練習する, make=作る, use=使う, help=手伝う, clean=そうじする, wash=洗う, open=開ける, close=閉める, come=来る, go=行く, buy=買う, listen=聞く, look=見る, watch=見る（じっと）, read=読む, write=書く, study=勉強する, sit=すわる, stand=立つ, get=得る, take=取る, need=必要とする, teach=教える, learn=学ぶ, think=思う, start=始める, finish=終える, stay=滞在する, wait=待つ, carry=運ぶ, call=電話する・呼ぶ, show=見せる, tell=伝える, morning=朝, afternoon=午後, evening=夕方, night=夜, today=今日, tomorrow=明日, usually=ふつうは, sometimes=ときどき, always=いつも, often=よく, very=とても, really=本当に, well=上手に, here=ここ, there=そこ, now=今, together=いっしょに, also=〜もまた, again=もう一度, cute=かわいい, beautiful=美しい, favorite=お気に入りの, delicious=おいしい, busy=いそがしい, hungry=おなかがすいた, tired=つかれた, new=新しい, old=古い, nice=すてきな, great=すばらしい, bad=悪い, many=たくさんの, every=毎〜, other=ほかの, kind=親切な" },
+    "what=何, where=どこ, when=いつ, who=だれ, how=どのように, which=どちら, why=なぜ, whose=だれの, family=家族, father=父, mother=母, brother=兄・弟, sister=姉・妹, grandmother=祖母, grandfather=祖父, house=家, room=部屋, kitchen=台所, bed=ベッド, door=ドア, window=窓, car=車, bike=自転車, bus=バス, train=電車, phone=電話, computer=コンピューター, picture=写真・絵, letter=手紙, word=単語, sentence=文, name=名前, club=部活, member=メンバー, team=チーム, time=時間, hour=1時間, minute=分, week=週, year=年, hobby=趣味, festival=祭り, city=市, Japan=日本, live=住む, like=好きだ, have=持っている, want=ほしい, know=知っている, speak=話す, practice=練習する, make=作る, use=使う, help=手伝う, clean=そうじする, wash=洗う, open=開ける, close=閉める, come=来る, go=行く, buy=買う, listen=聞く, look=見る, watch=見る（じっと）, read=読む, write=書く, study=勉強する, sit=すわる, stand=立つ, get=得る, take=取る, need=必要とする, teach=教える, learn=学ぶ, think=思う, start=始める, finish=終える, stay=滞在する, wait=待つ, carry=運ぶ, call=電話する・呼ぶ, show=見せる, tell=伝える, morning=朝, afternoon=午後, evening=夕方, night=夜, today=今日, tomorrow=明日, usually=ふつうは, sometimes=ときどき, always=いつも, often=よく, very=とても, really=本当に, well=上手に, here=ここ, there=そこ, now=今, together=いっしょに, also=〜もまた, again=もう一度, cute=かわいい, beautiful=美しい, favorite=お気に入りの, delicious=おいしい, busy=いそがしい, hungry=おなかがすいた, tired=つかれた, new=新しい, old=古い, nice=すてきな, great=すばらしい, bad=悪い, many=たくさんの, every=毎〜, other=ほかの, kind=親切な, subject=教科, science=理科, math=数学, history=歴史, homework=宿題, test=テスト, breakfast=朝食, lunch=昼食, dinner=夕食, shop=店, park=公園, library=図書館, station=駅, hospital=病院, river=川, sea=海, mountain=山, sky=空, flower=花, tree=木, animal=動物, eat=食べる, drink=飲む, play=する・遊ぶ, enjoy=楽しむ, run=走る, walk=歩く, swim=泳ぐ, sing=歌う, dance=おどる, cook=料理する, sleep=ねる, love=大好きだ, draw=描く, sell=売る, send=送る, smile=ほほえむ, talk=話す, visit=訪れる, bring=持ってくる, tall=背の高い, short=短い, long=長い, big=大きい, small=小さい, hot=暑い, cold=寒い, warm=暖かい, cool=すずしい, easy=簡単な, difficult=難しい, fun=楽しい, happy=うれしい, sad=悲しい, interesting=おもしろい, popular=人気のある, famous=有名な, young=若い, little=小さい, high=高い, fast=速い, early=早い, late=おそい, America=アメリカ, Australia=オーストラリア, Canada=カナダ, China=中国, India=インド, Korea=韓国, France=フランス, yesterday=昨日, last=この前の, ago=〜前に, then=その時, everyone=みんな, something=何か, thing=もの, place=場所, people=人々, boy=男の子, girl=女の子, man=男の人, woman=女の人, child=子ども, children=子どもたち, baby=赤ちゃん, uncle=おじ, aunt=おば, cousin=いとこ" },
   { group: "grade", name: "中学2年", sub: "JHS 2", words:
-    "went=行った, saw=見た, ate=食べた, made=作った, came=来た, took=取った, bought=買った, wrote=書いた, said=言った, got=得た, gave=あげた, told=伝えた, thought=思った, found=見つけた, felt=感じた, left=去った, met=会った, sent=送った, taught=教えた, began=始まった, ran=走った, spoke=話した, swam=泳いだ, slept=ねた, became=〜になった, brought=持ってきた, heard=聞いた, knew=知っていた, future=未来, dream=夢, job=仕事, trip=旅行, museum=博物館, weekend=週末, vacation=休暇, plan=計画, culture=文化, country=国, world=世界, ticket=切符, map=地図, information=情報, message=メッセージ, newspaper=新聞, magazine=雑誌, event=行事, contest=コンテスト, speech=スピーチ, prize=賞, answer=答え, question=質問, problem=問題, reason=理由, idea=考え, important=大切な, interesting=おもしろい, difficult=難しい, easy=簡単な, famous=有名な, popular=人気のある, dangerous=危険な, useful=役に立つ, careful=注意深い, excited=わくわくした, surprised=おどろいた, special=特別な, necessary=必要な, possible=可能な, true=本当の, different=違う, same=同じ, sure=確信して, better=よりよい, best=最もよい, more=もっと, most=最も, visit=訪れる, forget=忘れる, remember=覚えている, decide=決める, enjoy=楽しむ, invite=招待する, arrive=到着する, believe=信じる, borrow=借りる, lend=貸す, hope=望む, worry=心配する, change=変える, collect=集める, share=分かち合う, agree=賛成する, become=〜になる, choose=選ぶ, hurry=急ぐ, receive=受け取る, return=戻る, spend=過ごす, try=やってみる, win=勝つ, lose=負ける, early=早く, late=遅く, soon=すぐに, someday=いつか" },
+    "went=行った, saw=見た, ate=食べた, made=作った, came=来た, took=取った, bought=買った, wrote=書いた, said=言った, got=得た, gave=あげた, told=伝えた, thought=思った, found=見つけた, felt=感じた, left=去った, met=会った, sent=送った, taught=教えた, began=始まった, ran=走った, spoke=話した, swam=泳いだ, slept=ねた, became=〜になった, brought=持ってきた, heard=聞いた, knew=知っていた, future=未来, dream=夢, job=仕事, trip=旅行, museum=博物館, weekend=週末, vacation=休暇, plan=計画, culture=文化, country=国, world=世界, ticket=切符, map=地図, information=情報, message=メッセージ, newspaper=新聞, magazine=雑誌, event=行事, contest=コンテスト, speech=スピーチ, prize=賞, answer=答え, question=質問, problem=問題, reason=理由, idea=考え, important=大切な, interesting=おもしろい, difficult=難しい, easy=簡単な, famous=有名な, popular=人気のある, dangerous=危険な, useful=役に立つ, careful=注意深い, excited=わくわくした, surprised=おどろいた, special=特別な, necessary=必要な, possible=可能な, true=本当の, different=違う, same=同じ, sure=確信して, better=よりよい, best=最もよい, more=もっと, most=最も, visit=訪れる, forget=忘れる, remember=覚えている, decide=決める, enjoy=楽しむ, invite=招待する, arrive=到着する, believe=信じる, borrow=借りる, lend=貸す, hope=望む, worry=心配する, change=変える, collect=集める, share=分かち合う, agree=賛成する, become=〜になる, choose=選ぶ, hurry=急ぐ, receive=受け取る, return=戻る, spend=過ごす, try=やってみる, win=勝つ, lose=負ける, early=早く, late=遅く, soon=すぐに, someday=いつか, did=した, had=持っていた, was=〜だった, were=〜だった, stood=立った, sat=すわった, wore=着ていた, won=勝った, lost=負けた, sang=歌った, drank=飲んだ, drove=運転した, flew=飛んだ, grew=育った, kept=保った, paid=払った, sold=売った, understood=理解した, built=建てた, broke=こわした, caught=つかまえた, chose=選んだ, drew=描いた, fell=落ちた, forgot=忘れた, restaurant=レストラン, temple=寺, shrine=神社, castle=城, bridge=橋, island=島, airport=空港, passport=パスポート, souvenir=おみやげ, guide=案内人, tourist=観光客, customer=客, price=値段, size=サイズ, medicine=薬, fever=熱, headache=頭痛, skill=技術, expensive=高価な, cheap=安い, crowded=混んでいる, empty=からの, full=いっぱいの, heavy=重い, light=軽い, strong=強い, weak=弱い, wide=広い, narrow=せまい, deep=深い, healthy=健康な, sick=病気の, maybe=たぶん, probably=おそらく, once=一度, twice=二度, still=まだ, almost=ほとんど, only=〜だけ, even=〜でさえ, instead=代わりに, because=なぜなら, if=もし〜なら, though=〜だけれども, until=〜まで, while=〜の間, begin=始める, climb=登る, cross=横切る, cry=泣く, drive=運転する, fall=落ちる, follow=ついていく, happen=起こる, laugh=笑う, move=動く, pass=合格する, reach=着く, rest=休む, wear=着ている, welcome=歓迎する, wish=願う" },
   { group: "grade", name: "中学3年", sub: "JHS 3", words:
-    "environment=環境, experience=経験, communicate=伝え合う, volunteer=ボランティア, international=国際的な, technology=科学技術, invent=発明する, develop=発達させる, peace=平和, war=戦争, language=言語, abroad=外国に, scientist=科学者, recycle=リサイクルする, energy=エネルギー, protect=守る, effort=努力, opinion=意見, solve=解決する, successful=成功した, traditional=伝統的な, society=社会, nature=自然, history=歴史, foreign=外国の, understand=理解する, explain=説明する, introduce=紹介する, continue=続ける, discover=発見する, produce=生産する, reduce=減らす, increase=増える, government=政府, education=教育, health=健康, poor=貧しい, global=地球規模の, local=地元の, disaster=災害, safe=安全な, already=すでに, yet=まだ, ever=今までに, never=一度も〜ない, since=〜以来, build=建てる, spread=広がる, respect=尊敬する, support=支える, realize=気づく, improve=改善する, imagine=想像する, accept=受け入れる, allow=許す, compare=比べる, depend=頼る, prepare=準備する, suffer=苦しむ, survive=生き残る, destroy=破壊する, save=救う, create=創造する, express=表現する, population=人口, resource=資源, pollution=汚染, climate=気候, temperature=気温, plastic=プラスチック, garbage=ごみ, earth=地球, goal=目標, chance=機会, purpose=目的, result=結果, example=例, situation=状況, community=地域社会, generation=世代, diversity=多様性, smartphone=スマートフォン, robot=ロボット, project=計画, website=ウェブサイト, modern=現代の, ancient=古代の, serious=深刻な, positive=前向きな, negative=否定的な, various=さまざまな, convenient=便利な, comfortable=快適な, independent=独立した, peaceful=平和な, native=母国の" },
+    "environment=環境, experience=経験, communicate=伝え合う, volunteer=ボランティア, international=国際的な, technology=科学技術, invent=発明する, develop=発達させる, peace=平和, war=戦争, language=言語, abroad=外国に, scientist=科学者, recycle=リサイクルする, energy=エネルギー, protect=守る, effort=努力, opinion=意見, solve=解決する, successful=成功した, traditional=伝統的な, society=社会, nature=自然, history=歴史, foreign=外国の, understand=理解する, explain=説明する, introduce=紹介する, continue=続ける, discover=発見する, produce=生産する, reduce=減らす, increase=増える, government=政府, education=教育, health=健康, poor=貧しい, global=地球規模の, local=地元の, disaster=災害, safe=安全な, already=すでに, yet=まだ, ever=今までに, never=一度も〜ない, since=〜以来, build=建てる, spread=広がる, respect=尊敬する, support=支える, realize=気づく, improve=改善する, imagine=想像する, accept=受け入れる, allow=許す, compare=比べる, depend=頼る, prepare=準備する, suffer=苦しむ, survive=生き残る, destroy=破壊する, save=救う, create=創造する, express=表現する, population=人口, resource=資源, pollution=汚染, climate=気候, temperature=気温, plastic=プラスチック, garbage=ごみ, earth=地球, goal=目標, chance=機会, purpose=目的, result=結果, example=例, situation=状況, community=地域社会, generation=世代, diversity=多様性, smartphone=スマートフォン, robot=ロボット, project=計画, website=ウェブサイト, modern=現代の, ancient=古代の, serious=深刻な, positive=前向きな, negative=否定的な, various=さまざまな, convenient=便利な, comfortable=快適な, independent=独立した, peaceful=平和な, native=母国の, been=〜だった（過去分詞）, done=された, seen=見られた, eaten=食べられた, written=書かれた, spoken=話された, taken=取られた, given=与えられた, known=知られた, broken=こわれた, chosen=選ばれた, drawn=描かれた, forgotten=忘れられた, shown=見せられた, worn=着られた, ability=能力, advice=助言, audience=観客, challenge=挑戦, character=登場人物, condition=状態, disease=病気, effect=効果, emotion=感情, fact=事実, freedom=自由, human=人間, knowledge=知識, law=法律, patient=患者, poverty=貧困, product=製品, research=研究, rule=規則, solution=解決策, species=種, success=成功, symbol=象徴, tradition=伝統, view=眺め, waste=むだ, wildlife=野生生物, belong=所属する, cause=引き起こす, contribute=貢献する, decrease=減る, describe=描写する, encourage=励ます, exchange=交換する, influence=影響を与える, notice=気づく, provide=提供する, recognize=認識する, remain=残る, require=必要とする, translate=翻訳する, amazing=おどろくべき, available=利用できる, common=共通の, correct=正しい, enough=十分な, equal=平等な, familiar=よく知られた, fair=公平な, honest=正直な, huge=巨大な, impossible=不可能な, natural=自然の, private=個人の, public=公共の, rare=珍しい, similar=似ている, simple=簡単な, unique=独特な, wild=野生の, however=しかし, therefore=だから, finally=ついに, especially=特に, actually=実際に, recently=最近, suddenly=突然" },
 ];
 const GROUPS = [
   { id: "topic", name: "Topics", sub: "トピック" },
@@ -1018,8 +1054,9 @@ function nextWord() {
   return WORDS[Math.random() * WORDS.length | 0];
 }
 
-function startGame(words) {
-  if (!artReady) { setTimeout(() => startGame(words), 100); return; }
+function startGame(words, label) {
+  if (!artReady) { setTimeout(() => startGame(words, label), 100); return; }
+  if (label) try { localStorage.setItem("ww-last", JSON.stringify({ label, words })); } catch (e) {}
   fxAnims = [];
   audioOn();
   if (document.activeElement) document.activeElement.blur();
@@ -1029,7 +1066,7 @@ function startGame(words) {
   score = 0; lives = 5; wave = 0; combo = 0; shake = 0;
   deck = [];
   towerShake = 0; towerFlash = 0; collapseT = 0;
-  missed = new Map(); mana = 0; known = [spell("heal")]; spellMode = false; resetSpellFx(); warcryT = 0; spellTyped = ""; freezeTimer = 0; flash = 0;
+  missed = new Map(); mana = 0; known = [];   // magic unlocks after the first boss spellMode = false; resetSpellFx(); warcryT = 0; spellTyped = ""; freezeTimer = 0; flash = 0;
   bolts = []; meteors = []; tornados = []; learned = null; learnTimer = 0;
   state = "play";
   startIntro();
@@ -1046,6 +1083,8 @@ function startBossTest(n) {
   const go = () => {
     if (!artReady || state !== "play") { setTimeout(go, 100); return; }
     introT = 0; knights = []; wave = n - 1; nextWave();
+    const have = Math.ceil((n - 1) / 2);              // spells learned after bosses 1, 3, 5…
+    if (have > 0) known = [spell("heal"), ...heroSpells().slice(0, have).map(spell)];
     spawnLeft = 0; bossState = "warning"; bossTimer = 1.5; bannerText = "!! " + bossInfo(wave).name + " !!"; waveBanner = 1.5;
   };
   setTimeout(go, 150);
@@ -1322,6 +1361,7 @@ function spawnEnemy(forceName) {
 function answerOf(e) { return e.word.en.toLowerCase(); }
 
 window.addEventListener("keydown", (ev) => {
+  if (state === "tutorial") { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); closeTutorial(); } return; }
   if (state !== "play") return;
   audioOn();
   if (ev.key === "Process" || ev.isComposing || ev.keyCode === 229) { showIme(); ev.preventDefault(); return; }
@@ -1492,9 +1532,48 @@ function learnNextSpell() {
   const list = heroSpells(), next = list.find(n => !known.some(k => k.id === n));
   if (!next) return;
   learned = spell(next);
+  if (!known.length) {                               // first boss: magic unlocks with a short tutorial (game pauses)
+    known.push(spell("heal"), learned);
+    mana = 40;                                       // enough to try a spell straight away
+    state = "tutorial"; tutorialT = 0; target = null; typed = "";
+    setTimeout(() => SFX.learn(), 300);
+    return;
+  }
   known.push(learned);
   learnTimer = 3.2;
   setTimeout(() => SFX.learn(), 900);
+}
+let tutorialT = 0;
+document.getElementById("game").addEventListener("pointerdown", () => closeTutorial());
+function closeTutorial() { if (state !== "tutorial" || tutorialT < 0.6) return; state = "play"; SFX.spellReady(); }
+function drawTutorial() {
+  tutorialT += 1 / 60;
+  ctx.fillStyle = "rgba(14,10,31,.78)"; ctx.fillRect(0, 0, W, H);
+  const b = pixelBox(W / 2 - 400, 70, 800, 560, "#2a1b4f", "#ffd55a");
+  text("✦ MAGIC! ✦", W / 2, b.y + 50, 48, "#ffd55a", "#1a1033");
+  text("まほうが使えるようになった！", W / 2, b.y + 100, 28, "#f4e4c1");
+  const L0 = b.x + 60;
+  ctx.fillStyle = "#ffd55a"; ctx.fillRect(L0 - 18, b.y + 147, 36, 36); text("1", L0, b.y + 166, 28, "#1a1033");
+  text("Type words → MP fills up", L0 + 40, b.y + 155, 24, "#ffffff", null, "left");
+  text("単語をタイプすると MP がたまる", L0 + 40, b.y + 183, 20, "#c9b6ff", null, "left");
+  ctx.fillStyle = "#ffd55a"; ctx.fillRect(L0 - 18, b.y + 217, 36, 36); text("2", L0, b.y + 236, 28, "#1a1033");
+  text("Press SPACE → type a spell name", L0 + 40, b.y + 225, 24, "#ffffff", null, "left");
+  text("SPACE をおして、まほうの名前をタイプ", L0 + 40, b.y + 253, 20, "#c9b6ff", null, "left");
+  text("Your spells / あなたのまほう", W / 2, b.y + 305, 24, "#ffd55a");
+  known.forEach((sp, i) => {
+    const y = b.y + 350 + i * 58;
+    const sb = pixelBox(b.x + 70, y - 22, 170, 44, "#4a1f7a", sp.color, false);
+    text(sp.name, sb.x + 62, y, 24, "#ffffff"); text(sp.cost + " MP", sb.x + sb.w - 32, y, 15, "#ffd55a");
+    const [en, jp] = sp.info.split(" / ");
+    text(en, b.x + 262, y - 11, 19, "#f4e4c1", null, "left");
+    text(jp || "", b.x + 262, y + 13, 17, "#c9b6ff", null, "left");
+    if (sp === learned) { const nb = pixelBox(b.x + 700, y - 14, 64, 28, "#ff8fb1", "#1a1033", false); text("NEW", nb.x + nb.w / 2, nb.y + nb.h / 2, 14, "#1a1033"); }
+  });
+  text("SPACE again = cancel / もう一回 SPACE でやめる", W / 2, b.y + 470, 18, "#a99bc4");
+  if (tutorialT > 0.6) {
+    const ok = pixelBox(W / 2 - 110, b.y + 494, 220, 50, Math.floor(clock * 3) % 2 ? "#3fa34d" : "#4fc06a", "#1a1033");
+    text("OK ▶  ENTER", W / 2, ok.y + ok.h / 2, 24, "#ffffff", "#1a1033");
+  }
 }
 
 function nearestNB(k) { return alive().filter(e => !e.proj && !e.boss).sort((a, b) => a.x - b.x).slice(0, k); }
@@ -2056,6 +2135,7 @@ function draw() {
   for (const e of enemies) drawLabel(e);
   for (const f of floaters) { if (f.life < .3 && (Math.floor(clock * 20) & 1)) continue; text(f.text, Math.max(260, Math.min(W - 260, f.x)), f.y, f.big ? 56 : f.small ? 26 : 36, f.color || "#ffd55a", "#1a1033"); }
   drawHud();
+  if (state === "tutorial") drawTutorial();
 }
 
 let heroCastT = 0, shakeX = 0, shakeY = 0;   // short lean forward when a spell is cast
@@ -2327,14 +2407,18 @@ function drawHud() {
   ctx.fillStyle = "#0e0a1f"; ctx.fillRect(bx, by, bw, bh);
   const fillW = Math.round(bw * mana / MANA_MAX / 4) * 4;
   ctx.fillStyle = mana >= MANA_MAX ? (Math.floor(clock * 6) % 2 ? "#ffd55a" : "#ffb13d") : rainbowT > 0 ? "#d176d0" : "#7a5cff"; ctx.fillRect(bx, by, fillW, bh);
-  for (const sp of known) { const tx = bx + Math.round(bw * Math.min(1, costOf(sp) / MANA_MAX)) - 2; ctx.fillStyle = "rgba(255,255,255,.35)"; ctx.fillRect(tx, by - 4, 2, bh + 8); }   // cost marks
   ctx.fillStyle = "rgba(255,255,255,.35)"; ctx.fillRect(bx, by, fillW, 4);
-  text(Math.floor(mana) + (full && !spellMode ? "  SPACE!" : ""), bx + bw / 2, by + bh / 2, 20, full ? "#ffd55a" : "#ffffff", "#1a1033");
-  if (!known.length) text("Beat a boss to learn magic!", bx + bw / 2, by + bh / 2, 17, "#8a7aaa");
+  if (known.length) text(Math.floor(mana) + (full && !spellMode ? "  SPACE!" : ""), bx + bw / 2, by + bh / 2, 20, full ? "#ffd55a" : "#ffffff", "#1a1033");
+  else text("🔒 ボスをたおすと まほう！", bx + bw / 2, by + bh / 2, 17, "#a99bc4");
 
   // spellbook (right)
-  const sx0 = W - 400, sy0 = H - 96;
-  if (known.length) {
+  const rows = Math.ceil(known.length / 3), sx0 = W - 404, sy0 = H - 112 - rows * 42;
+  if (known.length && spellMode) {                       // the spellbook pops up above the typing bar while casting
+    pixelBox(sx0 - 12, sy0 - 40 - 34, 412, rows * 42 + 52 + 34, "#1a1033", "#ffd55a", false);
+    text("SPELLBOOK / まほう", sx0 + 190, sy0 - 54, 18, "#ffd55a");
+    const pick = spellTyped ? known.find(s => s.name.startsWith(spellTyped)) : null;
+    if (pick) text(pick.name + ": " + pick.info.split(" / ")[1], sx0 + 190, sy0 - 24, 16, pick.color);
+    else text("SPACE = cancel / やめる", sx0 + 190, sy0 - 24, 16, "#a99bc4");
     known.forEach((s, i) => {
       const col = i % 3, row = Math.floor(i / 3);
       const x = sx0 + col * 128, y = sy0 + row * 42;
@@ -2384,13 +2468,13 @@ function showGroup(id) {
     const b = document.createElement("button");
     b.className = "btn " + (lists.length > 8 ? "cbtn " : "") + colors[i % 3];
     b.innerHTML = `${Ls.name}<br><small>${Ls.sub} · ${parseList(Ls.words).length}</small>`;
-    b.addEventListener("click", () => startGame(parseList(Ls.words)));
+    b.addEventListener("click", () => startGame(parseList(Ls.words), Ls.name));
     listBtns.appendChild(b);
   });
   const allBtn = document.createElement("button");
   allBtn.className = "btn b4";
   allBtn.innerHTML = "Mix All<br><small>ぜんぶミックス</small>";
-  allBtn.addEventListener("click", () => startGame(lists.flatMap(Ls => parseList(Ls.words))));
+  allBtn.addEventListener("click", () => startGame(lists.flatMap(Ls => parseList(Ls.words)), "Mix All"));
   listBtns.appendChild(allBtn);
 }
 function deckWords(secs) { return secs.flatMap(sec => sec.words.map(([en, jp]) => ({ en, jp }))); }
@@ -2412,7 +2496,7 @@ function showSections(d) {
   back.addEventListener("click", showDecks);
   const all = document.createElement("button");
   all.className = "btn b4"; all.innerHTML = `${d.title} ALL<br><small>ぜんぶ (${deckWords(d.sections).length})</small>`;
-  all.addEventListener("click", () => startGame(deckWords(d.sections)));
+  all.addEventListener("click", () => startGame(deckWords(d.sections), d.title + " ALL"));
   top.append(back, all); listBtns.appendChild(top);
   const groups = [...new Set(d.sections.map(s => s.group))];
   groups.forEach((g, gi) => {
@@ -2421,14 +2505,14 @@ function showSections(d) {
     const row = document.createElement("div");
     const gAll = document.createElement("button");
     gAll.className = "btn sbtn b4"; gAll.textContent = `All (${deckWords(secs).length})`;
-    gAll.addEventListener("click", () => startGame(deckWords(secs)));
+    gAll.addEventListener("click", () => startGame(deckWords(secs), d.title + " " + g.split(" ・ ")[0]));
     row.appendChild(gAll);
     secs.forEach(sec => {
       const b = document.createElement("button");
       b.className = "btn sbtn " + colors[gi % 3];
       b.textContent = sec.title.split(" ・ ").reverse().join(" ・ ").replace(/ ・ .*/, "") + ` (${sec.words.length})`;
       b.title = sec.title;
-      b.addEventListener("click", () => startGame(deckWords([sec])));
+      b.addEventListener("click", () => startGame(deckWords([sec]), d.title + " " + sec.title.split(" ・ ")[0]));
       row.appendChild(b);
     });
     listBtns.appendChild(row);
@@ -2447,7 +2531,7 @@ CHARACTERS.forEach((c, i) => {
   b.addEventListener("click", () => {
     hero = i; try { localStorage.setItem("ww-hero", i); } catch (e) {}
     heroesDiv.querySelectorAll(".hero").forEach((h, j) => h.classList.toggle("on", j === i));
-    showHeroSpells(); audioOn(); SFX.spellReady();
+    showHeroSpells(); showQuickPlay(); audioOn(); SFX.spellReady();
   });
   heroesDiv.appendChild(b);
 });
@@ -2459,19 +2543,30 @@ function showHeroSpells() {
   heroSpellsDiv.innerHTML = "✦ " + ["heal", ...heroSpells()].map(id => { const sp = spell(id); return `<span style="color:${sp.color}" title="${sp.info}">${sp.name}<sup style="color:#a99bc4;font-size:11px"> ${sp.cost}</sup></span>`; }).join(" · ");
 }
 showHeroSpells();
-// difficulty: Normal (English or Japanese clues) / Easy (English with Japanese above it)
-const modeDiv = document.createElement("div");
-modeDiv.id = "modeRow";
-modeDiv.innerHTML = `<span class="modeLbl">Mode / モード：</span>
-  <button class="tab" data-m="0">Normal / ふつう</button>
-  <button class="tab" data-m="1">Easy / かんたん <small>(英語 + 日本語)</small></button>`;
-heroSpellsDiv.insertAdjacentElement("afterend", modeDiv);
-function showMode() { modeDiv.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", (t.dataset.m === "1") === easyMode)); }
-modeDiv.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
-  easyMode = t.dataset.m === "1"; try { localStorage.setItem("ww-easy", easyMode ? "1" : "0"); } catch (e) {}
-  showMode(); audioOn(); SFX.key(3);
+// ---------- 3-step start: hero → level → words ----------
+function showStep(n) {
+  for (const k of [1, 2, 3]) document.getElementById("step" + k).classList.toggle("hidden", k !== n);
+  document.querySelectorAll(".lvl").forEach(b => b.classList.toggle("on", (b.dataset.m === "1") === easyMode));
+  if (n === 1) showQuickPlay();
+}
+document.getElementById("next1").addEventListener("click", () => { audioOn(); SFX.key(3); showStep(2); });
+document.querySelectorAll(".back").forEach(b => b.addEventListener("click", () => { SFX.key(2); showStep(+b.dataset.to); }));
+document.querySelectorAll(".lvl").forEach(b => b.addEventListener("click", () => {
+  easyMode = b.dataset.m === "1"; try { localStorage.setItem("ww-easy", easyMode ? "1" : "0"); } catch (e) {}
+  audioOn(); SFX.spellReady(); showStep(3);
 }));
-showMode();
+// "play again" with the last list, so a student can jump straight in at the next break
+function showQuickPlay() {
+  const q = document.getElementById("quickPlay"); q.innerHTML = "";
+  let last = null; try { last = JSON.parse(localStorage.getItem("ww-last") || "null"); } catch (e) {}
+  if (!last || !last.words || !last.words.length) return;
+  const b = document.createElement("button");
+  b.className = "btn b4";
+  b.innerHTML = `▶ Play again / 前と同じで遊ぶ<br><small>${CHARACTERS[hero].name} · ${easyMode ? "Easy かんたん" : "Normal ふつう"} · ${last.label}</small>`;
+  b.addEventListener("click", () => startGame(last.words, last.label));
+  q.appendChild(b);
+}
+showStep(1);
 function paintHeroButtons() {
   CHARACTERS.forEach(c => {
     if (!c.art || !c.button) return;
@@ -2492,7 +2587,7 @@ showGroup(GROUPS.some(g => g.id === currentGroup) ? currentGroup : "topic");
 function goToMenu() {
   document.getElementById("over").classList.add("hidden");
   document.getElementById("pause").classList.add("hidden");
-  document.getElementById("title").classList.remove("hidden");
+  document.getElementById("title").classList.remove("hidden"); showStep(1);
   topBtns.classList.add("hidden");
   state = "title"; enemies = []; fireballs = []; target = null; typed = ""; spellMode = false;
   freezeTimer = 0; bolts = []; meteors = []; tornados = []; learnTimer = 0; resetSpellFx();
