@@ -56,7 +56,7 @@
 .lvl { font-family: inherit; cursor: pointer; width: min(420px, 42vw); padding: 14px 16px; background: #2a1b4f; color: #f4e4c1;
   border: 4px solid #8a6a9a; display: flex; flex-direction: column; align-items: center; gap: 10px; box-shadow: 0 6px 0 #1a1033; }
 .lvl:hover, .lvl.on { border-color: #ffd55a; background: #3a2766; }
-.lvlT { font-size: clamp(22px, 3vw, 34px); color: #ffd55a; }
+.lvlT { font-size: clamp(24px, 3.2vw, 38px); color: #ffd55a; line-height: 1.1; } .lvlT small { display: block; font-size: .55em; color: #f4e4c1; }
 .lvlD { font-size: clamp(13px, 1.6vw, 18px); line-height: 1.4; } .lvlD small { color: #a99bc4; }
 .lvlEx { background: #f4e4c1; color: #1a1033; border: 4px solid #8a6a9a; padding: 6px 18px; font-size: clamp(18px, 2.4vw, 28px); display: flex; flex-direction: column; align-items: center; line-height: 1.2; }
 .lvlEx small { font-size: .7em; color: #6b5a7a; }
@@ -89,12 +89,12 @@
         <p class="stepT"><b>2</b> Choose your level / レベルをえらぼう</p>
         <div id="levels">
           <button class="lvl" data-m="1">
-            <span class="lvlT">Easy / かんたん</span>
+            <span class="lvlT">Normal<small>ふつう</small></span>
             <span class="lvlD">英語のつづりがいつも見える<br><small>The spelling is always shown</small></span>
             <span class="lvlEx"><small>うれしい</small>happy</span>
           </button>
           <button class="lvl" data-m="0">
-            <span class="lvlT">Normal / ふつう</span>
+            <span class="lvlT">Challenge<small>チャレンジ</small></span>
             <span class="lvlD">日本語だけの時もある。つづりを思い出そう！<br><small>Sometimes only Japanese — remember the spelling!</small></span>
             <span class="lvlEx">うれしい<small>_ _ _ _ _</small></span>
           </button>
@@ -2562,7 +2562,7 @@ function showQuickPlay() {
   if (!last || !last.words || !last.words.length) return;
   const b = document.createElement("button");
   b.className = "btn b4";
-  b.innerHTML = `▶ Play again / 前と同じで遊ぶ<br><small>${CHARACTERS[hero].name} · ${easyMode ? "Easy かんたん" : "Normal ふつう"} · ${last.label}</small>`;
+  b.innerHTML = `▶ Play again / 前と同じで遊ぶ<br><small>${CHARACTERS[hero].name} · ${easyMode ? "Normal ふつう" : "Challenge チャレンジ"} · ${last.label}</small>`;
   b.addEventListener("click", () => startGame(last.words, last.label));
   q.appendChild(b);
 }
